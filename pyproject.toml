@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lllm"
+version = "0.0.0"
+description = "Low-Level Language Models toolkit for building agentic systems."
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Junyan Cheng" }]
+requires-python = ">=3.10"
+dependencies = [
+    "openai>=1.40.0",
+    "pydantic>=2.7.0",
+    "tiktoken>=0.7.0",
+    "numpy>=1.26.0",
+    "requests>=2.31.0",
+    "tqdm>=4.66.0",
+    "filelock>=3.13.0",
+    "nbformat>=5.10.0",
+    "jupyter-client>=8.6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/ChengJunyan1/lllm"
+Source = "https://github.com/ChengJunyan1/lllm"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["lllm*"]
