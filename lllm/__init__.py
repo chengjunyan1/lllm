@@ -1,11 +1,15 @@
 """Top-level package for Low-Level Language Models (LLLM)."""
 
 from .llm import (
+    AGENT_REGISTRY,
     Agent,
+    AgentBase,
+    AsyncAgentBase,
     Dialog,
     LLMCaller,
     LLMResponder,
     PROMPT_REGISTRY,
+    build_registered_agent,
     print_prompts,
     register_prompt,
 )
@@ -23,10 +27,14 @@ from .discovery import auto_discover
 
 __all__ = [
     "Agent",
+    "AgentBase",
+    "AsyncAgentBase",
     "Dialog",
     "LLMCaller",
     "LLMResponder",
     "PROMPT_REGISTRY",
+    "AGENT_REGISTRY",
+    "build_registered_agent",
     "print_prompts",
     "register_prompt",
     "ReplayableLogBase",

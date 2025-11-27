@@ -4,7 +4,8 @@
 # 2. Prompt management
 # 3. Replay system and frontend support
 
-from typing import List, Dict, Any, Tuple, Callable
+from typing import List, Dict, Any, Tuple, Callable, Type
+from enum import Enum
 from dataclasses import dataclass, field, asdict
 import openai
 from openai import RateLimitError
@@ -13,10 +14,13 @@ import numpy as np
 import os
 import time
 import random
+import inspect
+import asyncio
 
 
 from lllm.const import APITypes, find_model_card, Providers, Roles, Modalities, CompletionCost
 from lllm.log import ReplayableLogBase
+from lllm.utils import PrintSystem, StreamWrapper
 from lllm.const import RCollections
 from lllm.models import Prompt, Message, ParseError, FunctionCall, Function, AgentException
 from pydantic import BaseModel
@@ -467,6 +471,142 @@ class Prompts:
         if path not in PROMPT_REGISTRY:
             raise ValueError(f'Prompt {path} not found in the registry')
         return PROMPT_REGISTRY[path]
+
+
+AGENT_REGISTRY: Dict[str, Type['AgentBase']] = {}
+
+
+def _normalize_agent_type(agent_type):
+    if isinstance(agent_type, Enum) or issubclass(agent_type, Enum):
+        return agent_type.value
+    elif isinstance(agent_type, str):
+        return agent_type
+    else:
+        raise ValueError(f"Invalid agent type: {agent_type}")
+
+
+def register_agent_class(agent_cls: Type['AgentBase']) -> Type['AgentBase']:
+    agent_type = _normalize_agent_type(getattr(agent_cls, 'agent_type', None))
+    assert agent_type not in (None, ''), f"Agent class {agent_cls.__name__} must define `agent_type`"
+    if agent_type in AGENT_REGISTRY and AGENT_REGISTRY[agent_type] is not agent_cls:
+        raise ValueError(f"Agent type '{agent_type}' already registered with {AGENT_REGISTRY[agent_type].__name__}")
+    AGENT_REGISTRY[agent_type] = agent_cls
+    return agent_cls
+
+
+def get_agent_class(agent_type: str) -> Type['AgentBase']:
+    if agent_type not in AGENT_REGISTRY:
+        raise KeyError(f"Agent type '{agent_type}' not found. Registered: {list(AGENT_REGISTRY.keys())}")
+    return AGENT_REGISTRY[agent_type]
+
+
+def build_agent(config: Dict[str, Any], ckpt_dir: str, stream, agent_type: str = None, **kwargs) -> 'AgentBase':
+    if agent_type is None:
+        agent_type = config.get('agent_type')
+    agent_type = _normalize_agent_type(agent_type)
+    agent_cls = get_agent_class(agent_type)
+    return agent_cls(config, ckpt_dir, stream, **kwargs)
+
+
+class AgentBase:
+    agent_type: str | Enum = None
+    agent_group: List[str] = None
+    is_async: bool = False
+
+    def __init_subclass__(cls, register: bool = True, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if register:
+            register_agent_class(cls)
+
+    def __init__(self, config: Dict[str, Any], ckpt_dir: str, stream = None):
+        if stream is None:
+            stream = PrintSystem()
+        self.config = config
+        assert self.agent_group is not None, f"Agent group is not set for {self.agent_type}"
+        _agent_configs = config['agent_configs']
+        self.agent_configs = {}
+        for agent_name in self.agent_group:
+            assert agent_name in _agent_configs, f"Agent {agent_name} not found in agent configs"
+            self.agent_configs[agent_name] = _agent_configs[agent_name]
+        self._stream = stream
+        self._stream_backup = stream
+        self.st = None
+        self.ckpt_dir = ckpt_dir
+        self._log_base = build_log_base(config)
+        self.agents = {}
+        self.llm_caller = LLMCaller(self.config)
+        self.llm_responder = LLMResponder(self.config)
+        for agent_name, model_config in self.agent_configs.items():
+            model_config = model_config.copy()
+            model_name = model_config.pop('model_name')
+            self.model = find_model_card(model_name)
+            system_prompt_path = model_config.pop('system_prompt_path')
+            _api_type = APITypes(model_config.pop('api_type', 'completion'))
+            if _api_type == APITypes.COMPLETION:
+                _caller = self.llm_caller
+            elif _api_type == APITypes.RESPONSE:
+                _caller = self.llm_responder
+            else:
+                raise ValueError(f"Unsupported API type: {_api_type}")
+            self.agents[agent_name] = Agent(
+                name=agent_name,
+                system_prompt=PROMPT_REGISTRY[system_prompt_path],
+                model=model_name,
+                llm_caller=_caller,
+                model_args=model_config,
+                log_base=self._log_base,
+                max_exception_retry=self.config.get('max_exception_retry', 3),
+                max_interrupt_times=self.config.get('max_interrupt_times', 5),
+                max_llm_recall=self.config.get('max_llm_recall', 0),
+            )
+
+        self.__additional_args = {}
+        sig = inspect.signature(self.call)
+        for arg in sig.parameters:
+            if arg not in {'task', '**kwargs'}:
+                self.__additional_args[arg] = sig.parameters[arg].default
+
+    def set_st(self, session_name: str):
+        self.st = StreamWrapper(self._stream, self._log_base, session_name)
+
+    def restore_st(self):
+        pass
+
+    def silent(self):
+        self._stream = PrintSystem(silent=True)
+
+    def restore(self):
+        self._stream = self._stream_backup
+
+    def call(self, task: str, **kwargs):
+        raise NotImplementedError
+
+    def __call__(self, task: str, session_name: str = None, **kwargs) -> str:
+        if session_name is None:
+            session_name = task.replace(' ', '+')+'_'+dt.datetime.now().strftime('%Y%m%d_%H%M%S')
+        self.set_st(session_name)
+        report = self.call(task, **kwargs)
+        with self.st.expander('Prediction Overview', expanded=True):
+            self.st.code(f'{report}')
+        self.restore_st()
+        return report
+
+
+class AsyncAgentBase(AgentBase, register=False):
+    is_async: bool = True
+
+    async def call(self, task: str, **kwargs):
+        raise NotImplementedError
+
+    async def __call__(self, task: str, session_name: str = None, **kwargs):
+        if session_name is None:
+            session_name = task.replace(' ', '+')+'_'+dt.datetime.now().strftime('%Y%m%d_%H%M%S')
+        self.set_st(session_name)
+        report = await self.call(task, **kwargs)
+        with self.st.expander('Prediction Overview', expanded=True):
+            self.st.code(f'{report}')
+        self.restore_st()
+        return report
 
 
 

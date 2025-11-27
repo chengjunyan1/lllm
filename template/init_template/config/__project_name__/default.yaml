@@ -4,7 +4,10 @@
 name: {{project_name}}
 log_type: none  # set to 'localfile' to persist logs
 random_seed: 42
+log_dir: ./logs
+ckpt_dir: ./ckpt
 agent_type: vanilla
+system_type: basic
 
 agent_configs:
   vanilla:
