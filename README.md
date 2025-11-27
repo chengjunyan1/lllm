@@ -5,13 +5,16 @@
   <h1>Low-Level Language Models (LLLM) </h1>
 </div>
 
-LLLM is a framework for building advanced agentic systems. It emphasizes modularity, type safety, program synthesis, and neuro-symbolic capabilities.
+LLLM is a light-weight framework for building advanced agentic systems. 
+It is designed for researchers for fast prototyping of agentic systems in their research.
+It emphasizes minimalism, modularity, type safety, and supports for program synthesis & neuro-symbolic capabilities.
+
 
 ## Features
 
 - **Modular Architecture**: Core abstractions, providers, tools, and memory are decoupled.
 - **Type Safety**: Built on Pydantic for robust data validation and strict typing.
-- **Multi-Provider Support**: First-class support for OpenAI, with extensible provider interface.
+- **Multi-Provider Support**: First-class support for OpenAI, with an extensible provider interface.
 - **Neuro-Symbolic Design**: Advanced prompt management with structured output, exception handling, and interrupt logic.
 - **Jupyter Sandbox**: Secure code execution environment for program synthesis.
 
