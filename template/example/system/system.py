@@ -1,4 +1,4 @@
-from system.proxy.proxy import Proxy
+from lllm.proxies import Proxy
 from system.agent.agent import build_agent, Report
 import system.utils as U
 from typing import List, Dict

@@ -55,7 +55,7 @@ state_dir = pjoin(tmp_dir, '.state')
 mkdirs(state_dir)
 
 
-DEFAULT_CONFIG_PATH = pjoin(PROJECT_ROOT, 'configs', 'default.yaml')
+DEFAULT_CONFIG_PATH = pjoin(PROJECT_ROOT, 'config', 'system', 'default.yaml')
 
 assert pexists(DEFAULT_CONFIG_PATH), f'Default config file not found: {DEFAULT_CONFIG_PATH}'
 
