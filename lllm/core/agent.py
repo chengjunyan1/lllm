@@ -64,6 +64,21 @@ class Agent:
     max_interrupt_times: int = 5
     max_llm_recall: int = 0
 
+    """
+    Represents a single LLM agent with a specific role and capabilities.
+
+    Attributes:
+        name (str): The name or role of the agent (e.g., 'assistant', 'coder').
+        system_prompt (Prompt): The system prompt defining the agent's persona.
+        model (str): The model identifier (e.g., 'gpt-4o').
+        llm_provider (BaseProvider): The provider instance for LLM calls.
+        log_base (ReplayableLogBase): Logger for recording interactions.
+        model_args (Dict[str, Any]): Additional model arguments (temp, top_p, etc.).
+        max_exception_retry (int): Max retries for agent exceptions.
+        max_interrupt_times (int): Max consecutive tool call interrupts.
+        max_llm_recall (int): Max retries for LLM API errors.
+    """
+
     def __post_init__(self):
         self.model_card = find_model_card(self.model)
         self.model_card.check_args(self.model_args)
@@ -95,6 +110,21 @@ class Agent:
         args: Dict[str, Any] = {}, # for tracking additional information, such as frontend replay info
         parser_args: Dict[str, Any] = {},   
     ) -> Tuple[Message, Dialog, List[FunctionCall]]:
+        """
+        Executes the agent loop, handling LLM calls, tool execution, and interrupts.
+
+        Args:
+            dialog (Dialog): The current dialog state.
+            extra (Dict[str, Any], optional): Extra metadata for the call.
+            args (Dict[str, Any], optional): Additional arguments for the prompt.
+            parser_args (Dict[str, Any], optional): Arguments for the output parser.
+
+        Returns:
+            Tuple[Message, Dialog, List[FunctionCall]]: The final response message, the updated dialog, and a list of executed function calls.
+
+        Raises:
+            ValueError: If the agent fails to produce a valid response after retries.
+        """
         # Prompt: a function maps prompt args and dialog into the expected output 
         current_prompt = dialog.top_prompt
         interrupts = []

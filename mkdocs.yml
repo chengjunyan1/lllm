@@ -38,6 +38,13 @@ nav:
     - lllm.providers: reference/providers.md
     - lllm.proxies: reference/proxies.md
 
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [.]
+
 markdown_extensions:
   - admonition
   - pymdownx.details
