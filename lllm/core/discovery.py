@@ -7,10 +7,9 @@ import warnings
 from pathlib import Path
 from typing import Iterable, Optional
 
-from .config import auto_discovery_disabled, load_config
-from .llm import register_prompt
-from .models import Prompt
-from .proxies import BaseProxy, register_proxy
+from lllm.core.config import auto_discovery_disabled, load_config
+from lllm.core.models import Prompt, register_prompt
+from lllm.proxies.base import BaseProxy, register_proxy
 
 IGNORED_FILES = {"__init__.py", "__pycache__"}
 PROMPT_SECTION = "prompts"

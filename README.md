@@ -1,66 +1,77 @@
-<div align="center">
-  <img src="assets/LLLM-logo.png" alt="LLLM Logo" width="600" style="margin-left:'auto' margin-right:'auto'"/>
-  <br>
-  <br>
-  <h1>Low-Level Language Models (LLLM) </h1>
-</div>
+# LLLM: Large Language Model Agent Framework
 
+LLLM is a professional, production-ready framework for building advanced agentic systems. It emphasizes modularity, type safety, and neuro-symbolic capabilities.
 
-An LLM-agentic system framework. It contains LLLM and LLLM-Template. Check the document here: https://junyan.ch/lllm/
+## Features
+
+- **Modular Architecture**: Core abstractions, providers, tools, and memory are decoupled.
+- **Type Safety**: Built on Pydantic for robust data validation and strict typing.
+- **Multi-Provider Support**: First-class support for OpenAI, with extensible provider interface.
+- **Neuro-Symbolic Design**: Advanced prompt management with structured output, exception handling, and interrupt logic.
+- **Jupyter Sandbox**: Secure code execution environment for program synthesis.
 
 ## Installation
 
-You can install the reusable `lllm` package directly from this repository:
-
 ```bash
-pip install git+https://github.com/ChengJunyan1/lllm.git
+pip install -e .
 ```
 
-After installation, import it in your project:
+## Quick Start
+
+### Basic Chat
 
 ```python
-import lllm
-print(lllm.__version__)
+from lllm import AgentBase, Prompt, register_prompt
+
+# Define a prompt
+simple_prompt = Prompt(
+    path="simple_chat",
+    prompt="You are a helpful assistant. User says: {user_input}"
+)
+register_prompt(simple_prompt)
+
+# Define an Agent
+class SimpleAgent(AgentBase):
+    agent_type = "simple"
+    agent_group = ["assistant"]
+    
+    def call(self, task: str, **kwargs):
+        dialog = self.agents["assistant"].init_dialog({"user_input": task})
+        response, dialog, _ = self.agents["assistant"].call(dialog)
+        return response.content
+
+# Configure and Run
+config = {
+    "name": "simple_chat_agent",
+    "log_dir": "./logs",
+    "log_type": "localfile",
+    "agent_configs": {
+        "assistant": {
+            "model_name": "gpt-4o-mini",
+            "system_prompt_path": "simple_chat",
+            "temperature": 0.7,
+        }
+    }
+}
+
+agent = SimpleAgent(config, ckpt_dir="./ckpt")
+print(agent("Hello!"))
 ```
 
-## Prompt & Proxy auto-registration
+## Documentation
 
-Place an `lllm.toml` file in your project (or set `LLLM_CONFIG=/path/to/lllm.toml`).  
-Example (`template/lllm.toml`):
+See `docs/` for detailed documentation.
 
-```toml
-[prompts]
-folders = ["system/agent/prompts"]
+## Examples
 
-[proxies]
-folders = ["system/proxy/modules"]
-```
+Check `examples/` for more usage scenarios:
+- `examples/basic_chat.py`
+- `examples/tool_use.py`
 
-When `lllm` is imported it automatically scans these folders, registers every `Prompt` instance, and registers every `BaseProxy` subclass.  
-Set `LLLM_AUTO_DISCOVER=0` to skip auto-loading if you prefer to register things manually.
+## Testing
 
-## Project scaffold CLI
-
-Create a fresh project skeleton by running:
+Run tests with pytest:
 
 ```bash
-lllm create --name system
+pytest tests/
 ```
-
-This creates a `system/` directory containing:
-- `lllm.toml` pointing to prompt/proxy folders
-- `config/<name>/default.yaml` with stub settings
-- `system/agent/prompts/` and `system/proxy/modules/` with starter files
-
-Edit the generated files and you're ready to build your agent. The command fails if the destination already exists so you never overwrite existing work by accident.
-
-<!-- ## Documentation
-
-Comprehensive documentation (design philosophy, module reference, and build guides) lives under `docs/` and is published via [MkDocs](https://www.mkdocs.org/). Serve it locally with:
-
-```bash
-pip install mkdocs
-mkdocs serve
-```
-
-To generate the static site for GitHub Pages run `mkdocs build`. -->

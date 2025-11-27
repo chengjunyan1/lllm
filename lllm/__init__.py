@@ -1,58 +1,11 @@
-"""Top-level package for Low-Level Language Models (LLLM)."""
-
-from .llm import (
-    AGENT_REGISTRY,
-    Agent,
-    AgentBase,
-    AsyncAgentBase,
-    Dialog,
-    LLMCaller,
-    LLMResponder,
-    PROMPT_REGISTRY,
-    build_registered_agent,
-    print_prompts,
-    register_prompt,
-)
-from .log import ReplayableLogBase, build_log_base
-from .models import Function, FunctionCall, MCP, Message, Prompt
-from .proxies import (
-    BaseProxy,
-    PROXY_REGISTRY,
-    ProxyRegistrator,
-    get_proxy,
-    list_proxies,
-    register_proxy,
-)
-from .discovery import auto_discover
-
-__all__ = [
-    "Agent",
-    "AgentBase",
-    "AsyncAgentBase",
-    "Dialog",
-    "LLMCaller",
-    "LLMResponder",
-    "PROMPT_REGISTRY",
-    "AGENT_REGISTRY",
-    "build_registered_agent",
-    "print_prompts",
-    "register_prompt",
-    "ReplayableLogBase",
-    "build_log_base",
-    "Function",
-    "FunctionCall",
-    "MCP",
-    "Message",
-    "Prompt",
-    "BaseProxy",
-    "ProxyRegistrator",
-    "PROXY_REGISTRY",
-    "register_proxy",
-    "get_proxy",
-    "list_proxies",
-    "auto_discover",
-]
+from lllm.core.agent import Agent, AgentBase, build_agent, register_agent_class
+from lllm.core.models import Prompt, Message, Function, FunctionCall, MCP, register_prompt
+from lllm.core.const import Roles, Modalities, Providers, Features, APITypes
+from lllm.core.discovery import auto_discover
+from lllm.proxies.base import BaseProxy, Proxy, register_proxy
+from lllm.sandbox.jupyter import JupyterSandbox, JupyterSession
 
 __version__ = "0.1.0"
 
+# Trigger auto-discovery
 auto_discover()
