@@ -1,0 +1,5 @@
+[prompts]
+folders = ["system/agent/prompts"]
+
+[proxies]
+folders = ["system/proxy/modules"]

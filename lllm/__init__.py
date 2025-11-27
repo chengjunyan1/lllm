@@ -19,6 +19,7 @@ from .proxies import (
     list_proxies,
     register_proxy,
 )
+from .discovery import auto_discover
 
 __all__ = [
     "Agent",
@@ -41,7 +42,9 @@ __all__ = [
     "register_proxy",
     "get_proxy",
     "list_proxies",
+    "auto_discover",
 ]
 
-__version__ = "0.0.0"
+__version__ = "0.1.0"
 
+auto_discover()
