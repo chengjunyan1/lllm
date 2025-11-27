@@ -2,13 +2,11 @@
   <img src="assets/LLLM-logo.png" alt="LLLM Logo" width="800" style="margin-left:'auto' margin-right:'auto'"/>
   <br>
   <br>
-  <h1>Low-Level Language Models</h1>
+  <h1>Low-Level Language Models (LLLM) </h1>
 </div>
 
 
-Call the low-level language models under LLM agents easily.
-
-It contains LLLM and LLLM-Template. Check the document here: https://junyan.ch/lllm/
+An LLM-agentic system framework. It contains LLLM and LLLM-Template. Check the document here: https://junyan.ch/lllm/
 
 ## Installation
 
