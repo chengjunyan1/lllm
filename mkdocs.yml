@@ -1,6 +1,6 @@
 site_name: LLLM
 site_url: https://example.com/
-site_description: A professional, production-ready framework for building advanced agentic systems.
+site_description: A lightweight framework for researchers to fast-prototype advanced agentic systems.
 theme:
   name: material
   logo: assets/logo.png

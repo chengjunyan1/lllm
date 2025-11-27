@@ -4,7 +4,9 @@
   <img src="assets/logo.png" alt="LLLM Logo" width="200"/>
 </p>
 
-**LLLM** is a professional, production-ready framework for building advanced agentic systems. It emphasizes modularity, type safety, and neuro-symbolic capabilities.
+**LLLM** is a lightweight framework designed for researchers to fast-prototype advanced agentic systems. It emphasizes minimalism, modularity, and type safety, with first-class support for program synthesis and neuro-symbolic capabilities.
+
+It is built to be the "PyTorch for Agents"—flexible, imperative, and easy to debug.
 
 ## Key Features
 
