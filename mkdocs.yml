@@ -6,7 +6,6 @@ theme:
   logo: assets/logo.png
   favicon: assets/logo.png
   features:
-    - navigation.tabs
     - navigation.sections
     - navigation.expand
     - content.code.copy
