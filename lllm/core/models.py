@@ -130,14 +130,14 @@ class Message(BaseModel):
     usage: Dict[str, float] = Field(default_factory=dict)
     model_args: Dict[str, Any] = Field(default_factory=dict)
     extra: Dict[str, Any] = Field(default_factory=dict)
-    _errors: List[Exception] = Field(default_factory=list)
-    _attempts: List['Message'] = Field(default_factory=list)
+    execution_errors: List[Exception] = Field(default_factory=list)
+    execution_attempts: List['Message'] = Field(default_factory=list)
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @property
     def error_message(self):
-        return '\n'.join([str(e) for e in self._errors])
+        return '\n'.join([str(e) for e in self.execution_errors])
 
     @property
     def cost(self) -> CompletionCost:
@@ -149,7 +149,7 @@ class Message(BaseModel):
         return len(self.function_calls) > 0
 
     def to_dict(self):
-        return self.model_dump(exclude={'raw_response', '_errors', '_attempts'})
+        return self.model_dump(exclude={'raw_response', 'execution_errors', 'execution_attempts'})
 
     @classmethod
     def from_dict(cls, d: dict):
@@ -158,8 +158,8 @@ class Message(BaseModel):
 class Prompt(BaseModel):
     path: str
     prompt: str
-    _functions: List[Function] = Field(default_factory=list, alias='functions_list')
-    _mcp_servers: List[MCP] = Field(default_factory=list, alias='mcp_servers_list')
+    functions_list: List[Function] = Field(default_factory=list)
+    mcp_servers_list: List[MCP] = Field(default_factory=list)
     parser: Optional[Callable[[str], Dict[str, Any]]] = None
     exception_prompt: str = "Error: {error_message}. Please fix."
     interrupt_prompt: str = "Result: {call_results}. Continue?"
@@ -178,8 +178,8 @@ class Prompt(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     def model_post_init(self, __context):
-        self.functions = {f.name: f for f in self._functions}
-        self.mcp_servers = {m.server_label: m for m in self._mcp_servers}
+        self.functions = {f.name: f for f in self.functions_list}
+        self.mcp_servers = {m.server_label: m for m in self.mcp_servers_list}
 
     def link_function(self, name: str, function: Callable):
         if name in self.functions:
@@ -197,8 +197,8 @@ class Prompt(BaseModel):
             path=f'__{self.path}_exception_handler',
             prompt=self.exception_prompt,
             parser=self.parser,
-            functions_list=self._functions,
-            mcp_servers_list=self._mcp_servers,
+            functions_list=self.functions_list,
+            mcp_servers_list=self.mcp_servers_list,
             exception_prompt=self.exception_prompt,
             interrupt_prompt=self.interrupt_prompt,
             format=self.format,
@@ -217,8 +217,8 @@ class Prompt(BaseModel):
             path=f'__{self.path}_interrupt_handler',
             prompt=self.interrupt_prompt,
             parser=self.parser,
-            functions_list=self._functions,
-            mcp_servers_list=self._mcp_servers,
+            functions_list=self.functions_list,
+            mcp_servers_list=self.mcp_servers_list,
             exception_prompt=self.exception_prompt,
             interrupt_prompt=self.interrupt_prompt,
             format=self.format,
@@ -231,3 +231,11 @@ class Prompt(BaseModel):
             computer_use_config=self.computer_use_config,
         )
 
+
+PROMPT_REGISTRY: Dict[str, Prompt] = {}
+
+def register_prompt(prompt: Prompt):
+    if prompt.path in PROMPT_REGISTRY:
+        # print(f"Warning: Prompt {prompt.path} already registered. Overwriting.")
+        pass
+    PROMPT_REGISTRY[prompt.path] = prompt

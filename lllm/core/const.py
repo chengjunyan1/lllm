@@ -152,3 +152,18 @@ GPT_4O_MINI = ModelCard(
 register_model_card(GPT_4O_MINI)
 
 LLM_SIDE_ROLES = [Roles.ASSISTANT, Roles.TOOL_CALL]
+
+def find_model_card(name: str) -> ModelCard:
+    if name in MODEL_CARDS:
+        return MODEL_CARDS[name]
+    # Fallback or search logic could go here
+    # For now, return a default or raise error
+    # If name matches a snapshot, find the parent card
+    for card in MODEL_CARDS.values():
+        if name in card.snapshot_dict:
+            return card
+    
+    # If not found, maybe create a generic one or raise
+    # For robustness, let's return a generic card if not found, or raise
+    raise ValueError(f"Model card for '{name}' not found")
+

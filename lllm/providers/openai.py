@@ -8,9 +8,14 @@ from lllm.providers.base import BaseProvider
 
 class OpenAIProvider(BaseProvider):
     def __init__(self, config: Dict[str, Any] = {}):
-        self.client = openai.OpenAI(api_key=os.getenv('MY_OPENAI_KEY')) # Preserving env var name
+        assert os.getenv('OPENAI_API_KEY') is not None, "OPENAI_API_KEY is not set"
+        self.client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY')) # Preserving env var name
         # Support for other base_urls (e.g. Together AI)
-        self.together_client = openai.OpenAI(api_key=os.getenv('TOGETHER_API_KEY'), base_url='https://api.together.xyz/v1')
+        if os.getenv('TOGETHER_API_KEY') is not None:
+            self.together_client = openai.OpenAI(api_key=os.getenv('TOGETHER_API_KEY'), base_url='https://api.together.xyz/v1')
+        else:
+            self.together_client = None
+            print("TOGETHER_API_KEY is not set, cannot use Together AI models")
 
     def _get_client(self, model: str):
         model_card = find_model_card(model)
@@ -165,7 +170,7 @@ class OpenAIProvider(BaseProvider):
             usage=usage,
             parsed=parsed or {},
             extra=extra,
-            _errors=errors
+            execution_errors=errors
         )
         return response
 

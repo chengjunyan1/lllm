@@ -103,7 +103,7 @@ class Agent:
             exception_retry = self.max_exception_retry 
             working_dialog = dialog.fork() # make a copy of the dialog, truncate all excception handling dialogs
             while True: # ensure the response is no exception
-                _attempts = []
+                execution_attempts = []
                 try:
                     _model_args = self.model_args.copy()
                     _model_args.update(args)
@@ -111,8 +111,8 @@ class Agent:
                     response = self.llm_provider.call(working_dialog, current_prompt, self.model, _model_args, 
                                                     parser_args=parser_args, responder=self.name, extra=extra)
                     working_dialog.append(response) 
-                    if response._errors != []:
-                        _attempts.append(response)
+                    if response.execution_errors != []:
+                        execution_attempts.append(response)
                         raise AgentException(response.error_message)
                     else: 
                         break
@@ -138,7 +138,7 @@ class Agent:
                         else:
                             raise e
 
-            response._attempts = _attempts
+            response.execution_attempts = execution_attempts
             dialog.append(response) # update the dialog state
             # now handle the interruption
             if response.is_function_call:
@@ -260,7 +260,7 @@ class AgentBase:
             # This is a bit of a dependency issue. 
             # Ideally, prompts should be loaded/registered before Agent initialization.
             # For now, we'll assume the user registers prompts before creating agents.
-            from lllm.llm import PROMPT_REGISTRY # Backward compatibility or new location
+            from lllm.core.models import PROMPT_REGISTRY
             
             self.agents[agent_name] = Agent(
                 name=agent_name,
