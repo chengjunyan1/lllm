@@ -78,6 +78,17 @@ Check `examples/` for more usage scenarios:
 - `examples/basic_chat.py`
 - `examples/tool_use.py`
 
+### Proxies & Tools
+
+Built-in proxies (financial data, search, etc.) register automatically when their modules are imported. If you plan to call `Proxy()` directly, either:
+
+1. Set up an `lllm.toml` with a `[proxies]` section so discovery imports your proxy folders on startup, or
+2. Call `load_builtin_proxies()` to import the packaged modules, or manually import the proxies you care about (e.g., `from lllm.proxies.builtin import exa_proxy`).
+
+This mirrors how prompts are auto-registered via `[prompts]` in `lllm.toml`.
+
+Once proxies are loaded you can check what is available by calling `Proxy().available()`.
+
 ## Testing
 
 Run tests with pytest:

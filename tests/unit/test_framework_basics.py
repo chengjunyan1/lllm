@@ -5,7 +5,13 @@ import pytest
 from lllm.core.models import PROMPT_REGISTRY, Prompt, Message
 from lllm.core.const import APITypes, Roles, find_model_card
 from lllm.llm import Prompts, register_prompt
-from lllm.proxies import BaseProxy, Proxy, PROXY_REGISTRY, ProxyRegistrator
+from lllm.proxies import (
+    BaseProxy,
+    Proxy,
+    PROXY_REGISTRY,
+    ProxyRegistrator,
+    load_builtin_proxies,
+)
 
 
 @pytest.fixture
@@ -70,5 +76,13 @@ def test_proxy_registration_and_dispatch(proxy_registry_cleanup):
             return {"payload": payload, "cutoff": self.cutoff_date is not None}
 
     proxy = Proxy(activate_proxies=[path])
+    assert path in proxy.available()
     response = proxy(f"{path}.echo", payload=123)
     assert response["payload"] == 123
+
+
+def test_load_builtin_proxies_handles_missing_modules():
+    loaded, errors = load_builtin_proxies(modules=["lllm.proxies.builtin"])
+    assert "lllm.proxies.builtin" in loaded
+    _, errors = load_builtin_proxies(modules=["lllm.does.not.exist"])
+    assert "lllm.does.not.exist" in errors

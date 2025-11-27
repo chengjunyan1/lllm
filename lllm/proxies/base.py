@@ -6,6 +6,8 @@ from typing import Dict, Any, List, Optional, Callable
 import lllm.utils as U
 
 class BaseProxy:
+    """Base class for describing an API surface that agents can call as tools."""
+
     def __init__(
         self,
         *args,
@@ -46,6 +48,7 @@ class BaseProxy:
     def endpoint(category: str, endpoint: str, description: str, params: dict, response: list,
                  name: str = None, sub_category: str = None, remove_keys: list = None,
                  dt_cutoff: tuple = None, method: str = 'GET'):
+        """Decorator that records metadata about an API endpoint."""
         def decorator(func):
             func.endpoint_info = {
                 'category': category,
@@ -72,6 +75,13 @@ class BaseProxy:
         pass
 
 class Proxy:
+    """
+    Runtime registry that instantiates every discovered proxy and forwards calls.
+
+    Agents rarely instantiate this directly; instead the sandbox or higher-level tooling
+    wires it up so prompts can enumerate available endpoints for tool selection.
+    """
+
     def __init__(self, activate_proxies: Optional[List[str]] = None, cutoff_date: dt.datetime = None, deploy_mode: bool = False):
         self.activate_proxies = activate_proxies or []
         self.cutoff_date = cutoff_date
@@ -95,6 +105,7 @@ class Proxy:
             self.proxies[name] = instance
 
     def register(self, name: str, proxy_cls: Any):
+        """Register (or override) a proxy implementation at runtime."""
         if name in self.proxies:
             U.cprint(f'Proxy {name} already instantiated, overwriting instance', 'y')
         try:
@@ -107,6 +118,10 @@ class Proxy:
             instance = proxy_cls(self.activate_proxies, self.cutoff_date, self.deploy_mode)
         self.proxies[name] = instance
 
+    def available(self) -> List[str]:
+        """Return the sorted list of proxy identifiers currently loaded."""
+        return sorted(self.proxies.keys())
+
     def _resolve(self, endpoint: str) -> tuple[str, str]:
         if '.' in endpoint:
             parts = endpoint.split('.', 1)
@@ -117,6 +132,7 @@ class Proxy:
         return '/'.join(path_parts[:-1]), path_parts[-1]
 
     def __call__(self, endpoint: str, *args, **kwargs):
+        """Dispatch ``proxy_path.endpoint_name`` or ``proxy_path/endpoint`` to the proxy."""
         proxy_name, func_name = self._resolve(endpoint)
         if proxy_name not in self.proxies:
             raise KeyError(f"Proxy '{proxy_name}' not registered. Available: {list(self.proxies.keys())}")
@@ -142,4 +158,3 @@ def ProxyRegistrator(path: str, name: str, description: str):
         register_proxy(path, cls, overwrite=True)
         return cls
     return decorator
-

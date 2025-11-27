@@ -25,17 +25,7 @@ class FMPProxy(BaseProxy):
         return params
 ```
 
-At import time, decorated methods receive metadata (`endpoint_info`). The base class introspects every method, builds an index, and exposes:
-
-- `registry` – endpoint metadata and docstrings.
-- `index` – directory of categories/subcategories.
-- `_entries` – callable map used by `__call__` to execute endpoints.
-
-Helpers include:
-
-- `endpoint_directory` and `api_directory` for generating human-readable instructions that prompts can embed.
-- `auto_test()` to smoke-test every endpoint with mock parameters.
-- `ProxyRegistrator` to attach user-friendly names and descriptions for documentation.
+At import time, decorated methods receive metadata (`endpoint_info`). Auto-discovery (based on `lllm.toml`) imports every module listed under the `[proxies]` section so the `ProxyRegistrator` decorator can register the class. Helpers such as `endpoint_directory`, `api_directory`, and `auto_test()` can then use the stored metadata to build instructions for the model or smoke-test endpoints.
 
 ## Runtime Proxy
 
@@ -53,7 +43,9 @@ Features:
 - **Selective activation** – `activate_proxies` filters which proxies load; missing proxies are skipped without crashing the agent.
 - **Cutoff dates** – Pass `cutoff_date` to enforce data availability constraints. Each proxy can opt-in to date filtering via `dt_cutoff` metadata.
 - **Deployment mode** – `deploy_mode=True` disables cutoffs for production runs.
-- **Documentation helpers** – `proxy.api_catalog`, `proxy.api_directory`, and `proxy.retrieve_api_docs()` return rich text that can be inserted into prompts so the model understands available tooling.
+- **Documentation helpers** – `proxy.api_catalog`, `proxy.api_directory`, and `proxy.retrieve_api_docs()` (available on richer proxy implementations) return rich text that can be inserted into prompts so the model understands available tooling.
+- **Manual imports** – When using `Proxy()` in isolation (e.g., inside a notebook), make sure you import the proxy modules you want first so `ProxyRegistrator` has a chance to register them. Call `from lllm.proxies import load_builtin_proxies; load_builtin_proxies()` to bring in the packaged proxies, or import your own modules explicitly.
+- **Inventory** – Use `Proxy.available()` to inspect which proxy identifiers are currently loaded.
 
 The example template (`template/example/system/proxy/modules/*.py`) showcases large sets of proxies (finance, macro, search, Wolfram Alpha, etc.) managed through this infrastructure.
 
