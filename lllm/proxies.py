@@ -2,9 +2,33 @@ import os
 import datetime as dt
 import requests
 import inspect
+from typing import Dict, List, Type
 from tqdm import tqdm
 import lllm.utils as U
 import hashlib
+
+PROXY_REGISTRY: Dict[str, Type['BaseProxy']] = {}
+
+
+def register_proxy(name: str, proxy_cls: Type['BaseProxy'], *, overwrite: bool = False) -> Type['BaseProxy']:
+    assert isinstance(name, str) and name.strip(), "Proxy name must be a non-empty string"
+    if not issubclass(proxy_cls, BaseProxy):
+        raise TypeError(f"Proxy {proxy_cls} must inherit from BaseProxy")
+    existing = PROXY_REGISTRY.get(name)
+    if existing is not None and existing is not proxy_cls and not overwrite:
+        raise ValueError(f"Proxy '{name}' already registered with {existing.__name__}")
+    PROXY_REGISTRY[name] = proxy_cls
+    return proxy_cls
+
+
+def get_proxy(name: str) -> Type['BaseProxy']:
+    if name not in PROXY_REGISTRY:
+        raise KeyError(f"Proxy '{name}' not found. Registered proxies: {list(PROXY_REGISTRY.keys())}")
+    return PROXY_REGISTRY[name]
+
+
+def list_proxies() -> List[str]:
+    return sorted(PROXY_REGISTRY.keys())
 
 
 def ProxyRegistrator(path, name, description):

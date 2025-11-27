@@ -11,6 +11,14 @@ from .llm import (
 )
 from .log import ReplayableLogBase, build_log_base
 from .models import Function, FunctionCall, MCP, Message, Prompt
+from .proxies import (
+    BaseProxy,
+    PROXY_REGISTRY,
+    ProxyRegistrator,
+    get_proxy,
+    list_proxies,
+    register_proxy,
+)
 
 __all__ = [
     "Agent",
@@ -27,6 +35,12 @@ __all__ = [
     "MCP",
     "Message",
     "Prompt",
+    "BaseProxy",
+    "ProxyRegistrator",
+    "PROXY_REGISTRY",
+    "register_proxy",
+    "get_proxy",
+    "list_proxies",
 ]
 
 __version__ = "0.0.0"
