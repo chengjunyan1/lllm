@@ -1,7 +1,16 @@
 from __future__ import annotations
 from typing import List, Dict, Any, Callable, Optional, Union
 from pydantic import BaseModel, Field, ConfigDict
-from lllm.core.const import Roles, Modalities, APITypes, CompletionCost, ModelCard, MODEL_CARDS, Providers
+from lllm.core.const import (
+    Roles,
+    Modalities,
+    APITypes,
+    CompletionCost,
+    ModelCard,
+    MODEL_CARDS,
+    Providers,
+    find_model_card,
+)
 
 class AgentException(Exception):
     def __init__(self, message: str, context: str = ""):
@@ -132,6 +141,7 @@ class Message(BaseModel):
     extra: Dict[str, Any] = Field(default_factory=dict)
     execution_errors: List[Exception] = Field(default_factory=list)
     execution_attempts: List['Message'] = Field(default_factory=list)
+    api_type: APITypes = APITypes.COMPLETION
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -141,8 +151,13 @@ class Message(BaseModel):
 
     @property
     def cost(self) -> CompletionCost:
-        # Placeholder for cost calculation
-        return CompletionCost()
+        if self.model is None or not self.usage:
+            return CompletionCost()
+        try:
+            card = find_model_card(self.model)
+        except Exception:
+            return CompletionCost()
+        return card.cost(self.usage)
 
     @property
     def is_function_call(self) -> bool:
@@ -163,6 +178,7 @@ class Prompt(BaseModel):
     parser: Optional[Callable[[str], Dict[str, Any]]] = None
     exception_prompt: str = "Error: {error_message}. Please fix."
     interrupt_prompt: str = "Result: {call_results}. Continue?"
+    interrupt_final_prompt: str = "All tool calls are done. Provide the final response."
     format: Optional[Any] = None # Pydantic model class for structured output
     xml_tags: List[str] = Field(default_factory=list)
     md_tags: List[str] = Field(default_factory=list)
@@ -209,6 +225,7 @@ class Prompt(BaseModel):
             required_md_tags=self.required_md_tags,
             allow_web_search=self.allow_web_search,
             computer_use_config=self.computer_use_config,
+            interrupt_final_prompt=self.interrupt_final_prompt,
         )
     
     @property
@@ -221,6 +238,28 @@ class Prompt(BaseModel):
             mcp_servers_list=self.mcp_servers_list,
             exception_prompt=self.exception_prompt,
             interrupt_prompt=self.interrupt_prompt,
+            format=self.format,
+            xml_tags=self.xml_tags,
+            md_tags=self.md_tags,
+            signal_tags=self.signal_tags,
+            required_xml_tags=self.required_xml_tags,
+            required_md_tags=self.required_md_tags,
+            allow_web_search=self.allow_web_search,
+            computer_use_config=self.computer_use_config,
+            interrupt_final_prompt=self.interrupt_final_prompt,
+        )
+
+    @property
+    def interrupt_handler_final(self):
+         return Prompt(
+            path=f'__{self.path}_interrupt_handler_final',
+            prompt=self.interrupt_final_prompt,
+            parser=self.parser,
+            functions_list=self.functions_list,
+            mcp_servers_list=self.mcp_servers_list,
+            exception_prompt=self.exception_prompt,
+            interrupt_prompt=self.interrupt_prompt,
+            interrupt_final_prompt=self.interrupt_final_prompt,
             format=self.format,
             xml_tags=self.xml_tags,
             md_tags=self.md_tags,

@@ -96,7 +96,12 @@ class Agent:
             content=self.system_prompt(**prompt_args),
             creator='system',
         )
-        return Dialog([system_message], self.log_base, session_name)
+        return Dialog(
+            [system_message],
+            self.log_base,
+            session_name,
+            top_prompt=self.system_prompt,
+        )
 
     # send a message to the dialog manually
     def send_message(self, dialog: Dialog, prompt: Prompt, prompt_args: Dict[str, Any] = {}, 
@@ -126,7 +131,7 @@ class Agent:
             ValueError: If the agent fails to produce a valid response after retries.
         """
         # Prompt: a function maps prompt args and dialog into the expected output 
-        current_prompt = dialog.top_prompt
+        current_prompt = dialog.top_prompt or self.system_prompt
         interrupts = []
         for i in range(10000 if self.max_interrupt_times == 0 else self.max_interrupt_times+1): # +1 for the final response
             llm_recall = self.max_llm_recall 
@@ -180,6 +185,8 @@ class Agent:
                         result_str = f'The function {function_call.name} with identical arguments {function_call.arguments} has been called earlier, please check the previous results and do not call it again. If you do not need to call more functions, just stop calling and provide the final response.'
                     else:
                         print(f'{self.name} is calling function {function_call.name} with arguments {function_call.arguments}')
+                        if function_call.name not in current_prompt.functions:
+                            raise KeyError(f"Function '{function_call.name}' not registered on prompt '{current_prompt.path}'")
                         function = current_prompt.functions[function_call.name]
                         function_call = function(function_call)
                         result_str = function_call.result_str

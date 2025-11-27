@@ -6,10 +6,41 @@ from typing import Dict, Any, List, Optional, Callable
 import lllm.utils as U
 
 class BaseProxy:
-    def __init__(self, activate_proxies: List[str] = [], cutoff_date: dt.datetime = None, deploy_mode: bool = False):
-        self.activate_proxies = activate_proxies
+    def __init__(
+        self,
+        *args,
+        activate_proxies: Optional[List[str]] = None,
+        cutoff_date: Optional[dt.datetime] = None,
+        deploy_mode: bool = False,
+        use_cache: bool = True,
+    ):
+        """
+        Support both legacy signatures (cutoff_date, use_cache) and the newer keyword-driven one.
+        """
+        self.activate_proxies = activate_proxies[:] if activate_proxies else []
         self.cutoff_date = cutoff_date
         self.deploy_mode = deploy_mode
+        self.use_cache = use_cache
+
+        legacy_args = list(args)
+        if legacy_args:
+            first = legacy_args.pop(0)
+            if isinstance(first, list):  # legacy Proxy runtime order
+                self.activate_proxies = first
+                if legacy_args:
+                    self.cutoff_date = legacy_args.pop(0)
+                if legacy_args:
+                    self.deploy_mode = legacy_args.pop(0)
+            else:
+                self.cutoff_date = first
+                if legacy_args:
+                    self.use_cache = legacy_args.pop(0)
+
+        if isinstance(self.cutoff_date, str):
+            try:
+                self.cutoff_date = dt.datetime.fromisoformat(self.cutoff_date)
+            except ValueError:
+                self.cutoff_date = None
 
     @staticmethod
     def endpoint(category: str, endpoint: str, description: str, params: dict, response: list,
@@ -41,33 +72,59 @@ class BaseProxy:
         pass
 
 class Proxy:
-    def __init__(self, activate_proxies: List[str] = [], cutoff_date: dt.datetime = None, deploy_mode: bool = False):
-        self.proxies = {}
-        self.activate_proxies = activate_proxies
+    def __init__(self, activate_proxies: Optional[List[str]] = None, cutoff_date: dt.datetime = None, deploy_mode: bool = False):
+        self.activate_proxies = activate_proxies or []
         self.cutoff_date = cutoff_date
         self.deploy_mode = deploy_mode
-        # Proxy discovery logic should be injected or handled by a registry
-        # For now, we assume proxies are registered elsewhere or passed in.
-        # But the original code likely did auto-discovery.
-        # We will rely on `lllm.core.discovery` to populate proxies, or manual registration.
-        pass
+        self.proxies: Dict[str, BaseProxy] = {}
+        self._load_registered_proxies()
+
+    def _load_registered_proxies(self):
+        for name, proxy_cls in PROXY_REGISTRY.items():
+            if self.activate_proxies and name not in self.activate_proxies:
+                continue
+            try:
+                instance = proxy_cls(
+                    cutoff_date=self.cutoff_date,
+                    activate_proxies=self.activate_proxies,
+                    deploy_mode=self.deploy_mode,
+                )
+            except TypeError:
+                # Fallback to legacy positional order if subclass has not been updated yet
+                instance = proxy_cls(self.activate_proxies, self.cutoff_date, self.deploy_mode)
+            self.proxies[name] = instance
 
     def register(self, name: str, proxy_cls: Any):
-        self.proxies[name] = proxy_cls(self.activate_proxies, self.cutoff_date, self.deploy_mode)
+        if name in self.proxies:
+            U.cprint(f'Proxy {name} already instantiated, overwriting instance', 'y')
+        try:
+            instance = proxy_cls(
+                cutoff_date=self.cutoff_date,
+                activate_proxies=self.activate_proxies,
+                deploy_mode=self.deploy_mode,
+            )
+        except TypeError:
+            instance = proxy_cls(self.activate_proxies, self.cutoff_date, self.deploy_mode)
+        self.proxies[name] = instance
 
-    def __call__(self, endpoint: str, **kwargs):
-        # Dispatch to the appropriate proxy
-        # Format: "category.endpoint" or just "endpoint" if unique?
-        # Original code likely had logic to route calls.
-        # I'll implement a simple routing mechanism.
-        parts = endpoint.split('.')
-        if len(parts) == 2:
-            category, func_name = parts
-            if category in self.proxies:
-                proxy = self.proxies[category]
-                if hasattr(proxy, func_name):
-                    return getattr(proxy, func_name)(**kwargs)
-        raise ValueError(f"Endpoint {endpoint} not found")
+    def _resolve(self, endpoint: str) -> tuple[str, str]:
+        if '.' in endpoint:
+            parts = endpoint.split('.', 1)
+            return parts[0], parts[1]
+        path_parts = endpoint.split('/')
+        if len(path_parts) < 2:
+            raise ValueError(f"Invalid endpoint '{endpoint}'. Use '<proxy>.<method>' or '<proxy>/<method>'.")
+        return '/'.join(path_parts[:-1]), path_parts[-1]
+
+    def __call__(self, endpoint: str, *args, **kwargs):
+        proxy_name, func_name = self._resolve(endpoint)
+        if proxy_name not in self.proxies:
+            raise KeyError(f"Proxy '{proxy_name}' not registered. Available: {list(self.proxies.keys())}")
+        proxy = self.proxies[proxy_name]
+        if not hasattr(proxy, func_name):
+            raise AttributeError(f"Proxy '{proxy_name}' has no endpoint '{func_name}'")
+        handler = getattr(proxy, func_name)
+        return handler(*args, **kwargs)
 
 PROXY_REGISTRY: Dict[str, Any] = {}
 
@@ -85,5 +142,4 @@ def ProxyRegistrator(path: str, name: str, description: str):
         register_proxy(path, cls, overwrite=True)
         return cls
     return decorator
-
 

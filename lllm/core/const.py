@@ -99,14 +99,50 @@ class ModelCard(BaseModel):
         return sorted(self.snapshots, key=lambda x: x.dt)[-1]
 
     def check_args(self, args: Dict[str, Any]):
-        # This logic might be better placed in the Provider implementation
-        pass
+        if args is None:
+            return
+        max_tokens = args.get('max_completion_tokens') or args.get('max_output_tokens')
+        if max_tokens is not None and max_tokens > self.max_output_tokens:
+            raise ValueError(
+                f"Requested max tokens ({max_tokens}) exceeds limit for model {self.name} ({self.max_output_tokens})"
+            )
 
     def cost(self, usage: Dict[str, float]) -> CompletionCost:
-        # This logic should ideally be moved to a utility or provider method to avoid circular imports if utils depends on const
-        # For now, keeping a simplified version or moving the logic out.
-        # I will move the cost calculation logic to a separate utility to keep this file pure data/constants.
-        pass
+        prompt_tokens = int(usage.get('prompt_tokens', 0))
+        completion_tokens = int(usage.get('completion_tokens', 0))
+        cached_prompt_tokens = int(usage.get('cached_prompt_tokens', 0))
+        billable_prompt = max(prompt_tokens - cached_prompt_tokens, 0)
+        prompt_cost = (billable_prompt / 1_000_000) * self.input_price
+        cached_cost = (cached_prompt_tokens / 1_000_000) * self.cached_input_price
+        completion_cost = (completion_tokens / 1_000_000) * self.output_price
+        return CompletionCost(
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            cached_prompt_tokens=cached_prompt_tokens,
+            cost=prompt_cost + cached_cost + completion_cost,
+        )
+
+    def make_classifier(self, classes: List[str], strength: int = 10) -> Dict[str, Any]:
+        if not classes:
+            raise ValueError("Classifier requires at least one class token")
+        encoding_name = None
+        try:
+            encoding_name = encoding_name_for_model(self.latest_snapshot.name)
+        except Exception:
+            pass
+        encoding = tiktoken.get_encoding(encoding_name or "cl100k_base")
+        bias: Dict[int, float] = {}
+        for label in classes:
+            tokens = encoding.encode(label)
+            if len(tokens) != 1:
+                raise ValueError(f"Label '{label}' does not map to a single token for classifier use")
+            bias[tokens[0]] = float(strength)
+        return {
+            "max_tokens": 1,
+            "temperature": 0,
+            "top_p": 0,
+            "logit_bias": bias,
+        }
 
 MODEL_CARDS: Dict[str, ModelCard] = {}
 
@@ -166,4 +202,3 @@ def find_model_card(name: str) -> ModelCard:
     # If not found, maybe create a generic one or raise
     # For robustness, let's return a generic card if not found, or raise
     raise ValueError(f"Model card for '{name}' not found")
-

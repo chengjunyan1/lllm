@@ -73,7 +73,7 @@ class JupyterSession:
         _init_code = f'''# INIT CODE (DO NOT REMOVE THIS CELL)
 import sys
 sys.path.append('{_project_root}')
-from analytica.proxy.re import Proxy
+from lllm.proxies import Proxy
 proxy = Proxy(activate_proxies={self.metadata['proxy']['activate_proxies']}, cutoff_date={_cutoff_date_str}, deploy_mode={self.metadata['proxy']['deploy_mode']})
 CALL_API = proxy.__call__'''
         cell_0_content = self.cells[0].source if self.cells else ''
@@ -337,13 +337,13 @@ CALL_API = proxy.__call__'''
             return True
         
 
-        lock = U.make_file_lock('analytica_jupyter_kernel', timeout=20)
+        lock = U.make_file_lock('lllm_jupyter_kernel', timeout=20)
 
         if self._verbose:
             print(f"Starting kernel for session '{self.name}'...")
         try:
             with lock:
-                self.kernel_manager = KernelManager(kernel_name='analytica', env=os.environ) # Assumes ipykernel
+                self.kernel_manager = KernelManager(kernel_name='python3', env=os.environ)
                 self.kernel_manager.start_kernel()
                 self.kernel_client = self.kernel_manager.client()
                 self.kernel_client.start_channels()
@@ -359,7 +359,7 @@ CALL_API = proxy.__call__'''
                         print("Timeout waiting for kernel to become ready."); self.shutdown_kernel(); return False
         except TimeoutError:
             if self._verbose:
-                print(f"Failed to acquire lock on analytica_jupyter_kernel, another process may be holding it.")
+                print(f"Failed to acquire lock on lllm_jupyter_kernel, another process may be holding it.")
                 self.shutdown_kernel(); return False
         except Exception as e:
             if self._verbose:

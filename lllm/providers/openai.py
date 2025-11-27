@@ -99,15 +99,19 @@ class OpenAIProvider(BaseProvider):
         # For now, following logic in LLMCaller._call_openai
         
         funcs = [func.to_tool(Providers.OPENAI) for func in prompt.functions.values()]
+        call_args = model_args.copy()
         
         if prompt.format is None:
             call_fn = client.chat.completions.create
+            api_type = APITypes.COMPLETION
         else:
             call_fn = client.beta.chat.completions.parse
-            model_args['response_format'] = prompt.format
+            call_args = call_args.copy()
+            call_args['response_format'] = prompt.format
+            api_type = APITypes.RESPONSE
 
         if model_card.is_reasoning:
-            model_args['temperature'] = 1
+            call_args['temperature'] = call_args.get('temperature', 1)
 
         # Prepare messages
         openai_messages = self._convert_dialog(dialog)
@@ -116,7 +120,7 @@ class OpenAIProvider(BaseProvider):
             model=model,
             messages=openai_messages,
             tools=funcs if funcs else None, # Only pass tools if there are any
-            **model_args
+            **call_args
         )
         
         choice = completion.choices[0]
@@ -153,9 +157,9 @@ class OpenAIProvider(BaseProvider):
                 logprobs = None
                 parsed = json.loads(content)
             
-            if 'response_format' in model_args and prompt.format is not None:
+            if 'response_format' in call_args and prompt.format is not None:
                  # convert the format uninstantiated class to a json string
-                 model_args['response_format'] = prompt.format.model_json_schema()
+                 call_args['response_format'] = prompt.format.model_json_schema()
             function_calls = []
 
         response = Message(
@@ -166,11 +170,12 @@ class OpenAIProvider(BaseProvider):
             content=content,
             logprobs=logprobs or [],
             model=model,
-            model_args=model_args,
+            model_args=call_args,
             usage=usage,
             parsed=parsed or {},
             extra=extra,
-            execution_errors=errors
+            execution_errors=errors,
+            api_type=api_type,
         )
         return response
 

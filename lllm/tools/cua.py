@@ -10,8 +10,9 @@ import json
 import os
 import uuid
 # from playwright.async_api import TimeoutError, async_playwright
-from sllm.llm import Dialog, ParseError
-from sllm.utils import is_openai_rate_limit_error
+from lllm.core.dialog import Dialog
+from lllm.core.const import ParseError
+from lllm.utils import is_openai_rate_limit_error
 from openai import AsyncAzureOpenAI, RateLimitError
 from enum import Enum
 import datetime as dt
