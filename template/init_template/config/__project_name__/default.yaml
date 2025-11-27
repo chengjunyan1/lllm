@@ -1,0 +1,19 @@
+# Default configuration for {{project_name}}
+# Fill in real values before running the system.
+
+name: {{project_name}}
+log_type: none  # set to 'localfile' to persist logs
+random_seed: 42
+agent_type: vanilla
+
+agent_configs:
+  vanilla:
+    model_name: gpt-4.1-mini
+    system_prompt_path: {{project_name}}/system
+    temperature: 0.2
+    max_completion_tokens: 2048
+
+activate_proxies: []
+max_exception_retry: 3
+max_interrupt_times: 5
+max_llm_recall: 0

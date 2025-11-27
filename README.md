@@ -35,3 +35,17 @@ folders = ["system/proxy/modules"]
 When `lllm` is imported it automatically scans these folders, registers every `Prompt` instance, and registers every `BaseProxy` subclass.  
 Set `LLLM_AUTO_DISCOVER=0` to skip auto-loading if you prefer to register things manually.
 
+## Project scaffold CLI
+
+Create a fresh project skeleton by running:
+
+```bash
+lllm create --name system
+```
+
+This creates a `system/` directory containing:
+- `lllm.toml` pointing to prompt/proxy folders
+- `config/<name>/default.yaml` with stub settings
+- `system/agent/prompts/` and `system/proxy/modules/` with starter files
+
+Edit the generated files and you're ready to build your agent. The command fails if the destination already exists so you never overwrite existing work by accident.
