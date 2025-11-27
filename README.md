@@ -1,6 +1,11 @@
-# LLLM: Large Language Model Agent Framework
+<div align="center">
+  <img src="assets/LLLM-logo.png" alt="LLLM Logo" width="600" style="margin-left:'auto' margin-right:'auto'"/>
+  <br>
+  <br>
+  <h1>Low-Level Language Models (LLLM) </h1>
+</div>
 
-LLLM is a professional, production-ready framework for building advanced agentic systems. It emphasizes modularity, type safety, program synthesis, and neuro-symbolic capabilities.
+LLLM is a framework for building advanced agentic systems. It emphasizes modularity, type safety, program synthesis, and neuro-symbolic capabilities.
 
 ## Features
 
