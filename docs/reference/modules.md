@@ -30,12 +30,4 @@ This section lists the primary modules in the repository with short descriptions
 | `template/example/system/agent/agent.py` | Implements the `Vanilla` agent that orchestrates prompts and dialogs. |
 | `template/example/system/proxy/modules/*.py` | Realistic proxy implementations (financial data, Google Trends, FRED, Wolfram Alpha, etc.). |
 
-## Assets & Documentation
-
-| Path | Description |
-| --- | --- |
-| `assets/agent_call.png` | Visual representation of the agent-call state machine, used throughout the documentation. |
-| `docs/` | MkDocs documentation source (design philosophy, architecture, guides, references). |
-| `mkdocs.yml` | MkDocs configuration enabling GitHub Pages/GitBook-style publishing. |
-
 Use this table as a quick index when contributing or debugging.

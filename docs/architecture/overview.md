@@ -8,7 +8,6 @@ LLLM ships as a Python package (`lllm/`) plus reusable templates (`template/`). 
 | --- | --- |
 | `lllm/` | Core runtime (agents, prompts, logging, proxies, sandbox, CLI helpers). |
 | `template/` | Scaffolds consumed by `lllm create --name <system>`. Includes a minimal `init_template` and a richer `example` template with ready-made proxies. |
-| `assets/` | Static assets (e.g., `agent_call.png`) referenced by the documentation. |
 | `README.md` | Quick-start instructions for installing the package and enabling auto-discovery. |
 | `requirements.txt` / `pyproject.toml` | Packaging metadata when installing as a library. |
 
