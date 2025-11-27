@@ -2,7 +2,7 @@
 
 Call the low-level language models under LLM agents easily.
 
-It contains LLLM and LLLM-Template
+It contains LLLM and LLLM-Template. Check the document here: https://junyan.ch/lllm/
 
 ## Installation
 
