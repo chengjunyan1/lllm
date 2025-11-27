@@ -1,0 +1,26 @@
+site_name: LLLM Documentation
+site_description: "Design, architecture, and usage of the Low-Level Language Models toolkit"
+repo_url: https://github.com/ChengJunyan1/lllm
+nav:
+  - Design Philosophy: index.md
+  - Architecture:
+      - Overview: architecture/overview.md
+  - Core Concepts:
+      - Agent Call: core/agent-call.md
+      - Prompt Design: core/prompts.md
+      - Proxies & Sandbox: core/proxy-and-sandbox.md
+      - Logging & Observability: core/logging.md
+      - Configuration & Discovery: core/discovery.md
+  - Guides:
+      - Building Agents: guides/building-agents.md
+      - Templates & CLI: guides/project-template.md
+  - Reference:
+      - Module Reference: reference/modules.md
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+theme:
+  name: readthedocs
+  highlightjs: true

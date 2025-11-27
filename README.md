@@ -49,3 +49,14 @@ This creates a `system/` directory containing:
 - `system/agent/prompts/` and `system/proxy/modules/` with starter files
 
 Edit the generated files and you're ready to build your agent. The command fails if the destination already exists so you never overwrite existing work by accident.
+
+<!-- ## Documentation
+
+Comprehensive documentation (design philosophy, module reference, and build guides) lives under `docs/` and is published via [MkDocs](https://www.mkdocs.org/). Serve it locally with:
+
+```bash
+pip install mkdocs
+mkdocs serve
+```
+
+To generate the static site for GitHub Pages run `mkdocs build`. -->
