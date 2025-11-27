@@ -38,7 +38,7 @@ def main() -> None:
     create_parser.add_argument(
         "--template",
         default="init_template",
-        help="Template folder inside template/ to use (default: init_template).",
+        help="Template folder inside templates/ to use (default: init_template).",
     )
 
     args = parser.parse_args()
@@ -71,7 +71,7 @@ def create_project(name: str, template_name: str) -> None:
 
 def _resolve_template(template_name: str) -> Path | None:
     package_root = Path(__file__).resolve().parent.parent
-    repo_template = package_root / "template" / template_name
+    repo_template = package_root / "templates" / template_name
     if repo_template.exists():
         return repo_template
     return None
