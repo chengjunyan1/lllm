@@ -26,15 +26,25 @@ theme:
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
+  - Architecture:
+    - Overview: architecture/overview.md
   - Core Concepts:
     - Agents: core/agents.md
+    - Agent Call: core/agent-call.md
     - Prompts: core/prompts.md
     - Providers: core/providers.md
+    - Discovery: core/discovery.md
+    - Logging: core/logging.md
+    - Proxy & Sandbox: core/proxy-and-sandbox.md
+  - Guides:
+    - Building Agents: guides/building-agents.md
+    - Project Template: guides/project-template.md
   - Advanced:
     - Neuro-Symbolic AI: advanced/neuro-symbolic.md
     - Program Synthesis: advanced/program-synthesis.md
   - API Reference:
-    - lllm.core: reference/core.md
+    - Core API: reference/core.md
+    - Module Index: reference/modules.md
     - lllm.providers: reference/providers.md
     - lllm.proxies: reference/proxies.md
 
