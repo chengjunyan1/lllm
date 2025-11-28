@@ -174,5 +174,5 @@ git push origin main --tags
 
 # update doc
 mkdocs build --strict
-mkdocs gh-deploy --force --clean
+mkdocs gh-deploy --force --clean 
 -->
