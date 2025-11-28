@@ -1,75 +1,75 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>https://example.com/</loc>
+         <loc>https://lllm.one/</loc>
          <lastmod>2025-11-28</lastmod>
     </url>
     <url>
-         <loc>https://example.com/getting-started/</loc>
+         <loc>https://lllm.one/getting-started/</loc>
          <lastmod>2025-11-28</lastmod>
     </url>
     <url>
-         <loc>https://example.com/advanced/neuro-symbolic/</loc>
+         <loc>https://lllm.one/advanced/neuro-symbolic/</loc>
          <lastmod>2025-11-28</lastmod>
     </url>
     <url>
-         <loc>https://example.com/advanced/program-synthesis/</loc>
+         <loc>https://lllm.one/advanced/program-synthesis/</loc>
          <lastmod>2025-11-28</lastmod>
     </url>
     <url>
-         <loc>https://example.com/architecture/overview/</loc>
+         <loc>https://lllm.one/architecture/overview/</loc>
          <lastmod>2025-11-28</lastmod>
     </url>
     <url>
-         <loc>https://example.com/core/agent-call/</loc>
+         <loc>https://lllm.one/core/agent-call/</loc>
          <lastmod>2025-11-28</lastmod>
     </url>
     <url>
-         <loc>https://example.com/core/agents/</loc>
+         <loc>https://lllm.one/core/agents/</loc>
          <lastmod>2025-11-28</lastmod>
     </url>
     <url>
-         <loc>https://example.com/core/discovery/</loc>
+         <loc>https://lllm.one/core/discovery/</loc>
          <lastmod>2025-11-28</lastmod>
     </url>
     <url>
-         <loc>https://example.com/core/logging/</loc>
+         <loc>https://lllm.one/core/logging/</loc>
          <lastmod>2025-11-28</lastmod>
     </url>
     <url>
-         <loc>https://example.com/core/prompts/</loc>
+         <loc>https://lllm.one/core/prompts/</loc>
          <lastmod>2025-11-28</lastmod>
     </url>
     <url>
-         <loc>https://example.com/core/providers/</loc>
+         <loc>https://lllm.one/core/providers/</loc>
          <lastmod>2025-11-28</lastmod>
     </url>
     <url>
-         <loc>https://example.com/core/proxy-and-sandbox/</loc>
+         <loc>https://lllm.one/core/proxy-and-sandbox/</loc>
          <lastmod>2025-11-28</lastmod>
     </url>
     <url>
-         <loc>https://example.com/guides/building-agents/</loc>
+         <loc>https://lllm.one/guides/building-agents/</loc>
          <lastmod>2025-11-28</lastmod>
     </url>
     <url>
-         <loc>https://example.com/guides/project-template/</loc>
+         <loc>https://lllm.one/guides/project-template/</loc>
          <lastmod>2025-11-28</lastmod>
     </url>
     <url>
-         <loc>https://example.com/reference/core/</loc>
+         <loc>https://lllm.one/reference/core/</loc>
          <lastmod>2025-11-28</lastmod>
     </url>
     <url>
-         <loc>https://example.com/reference/modules/</loc>
+         <loc>https://lllm.one/reference/modules/</loc>
          <lastmod>2025-11-28</lastmod>
     </url>
     <url>
-         <loc>https://example.com/reference/providers/</loc>
+         <loc>https://lllm.one/reference/providers/</loc>
          <lastmod>2025-11-28</lastmod>
     </url>
     <url>
-         <loc>https://example.com/reference/proxies/</loc>
+         <loc>https://lllm.one/reference/proxies/</loc>
          <lastmod>2025-11-28</lastmod>
     </url>
 </urlset>
