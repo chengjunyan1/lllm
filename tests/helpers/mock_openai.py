@@ -85,3 +85,25 @@ def text_completion(content: str) -> MockCompletion:
     message = MockMessage(content=content, tool_calls=[])
     choice = MockChoice(finish_reason="stop", message=message)
     return MockCompletion(choice, MockUsage())
+
+
+def completion_from_dict(data: dict) -> MockCompletion:
+    finish_reason = data.get("finish_reason", "stop")
+    usage = MockUsage(data.get("usage"))
+    tool_calls = []
+    if finish_reason == "tool_calls":
+        for call in data.get("tool_calls", []):
+            call_id = call.get("id", "call_recorded")
+            fn = call.get("function", {})
+            tool_calls.append(MockToolCall(call_id, fn.get("name", ""), fn.get("arguments", {})))
+        message = MockMessage(content=None, tool_calls=tool_calls)
+    else:
+        message = MockMessage(content=data.get("message_content"), tool_calls=[])
+    choice = MockChoice(finish_reason=finish_reason, message=message)
+    return MockCompletion(choice, usage)
+
+
+def load_recorded_completions(path) -> list[MockCompletion]:
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    return [completion_from_dict(entry) for entry in data]

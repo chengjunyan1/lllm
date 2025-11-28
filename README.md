@@ -103,9 +103,11 @@ The sample configuration points to `examples/autodiscovery/prompts/` and `exampl
 
 ## Testing & Offline Mocks
 
-- Run the full suite: `pytest`.
+- Run the full suite (for framework developers): `pytest`.
 - For an end-to-end agent/tool flow without real OpenAI requests, see `tests/integration/test_tool_use_mock_openai.py`. It uses the scripted client defined in `tests/helpers/mock_openai.py`, mirroring what a VCR fixture would capture.
-- When you eventually want to replay real HTTP exchanges, swap the scripted responses with your recorded payloads—the rest of the provider stack already supports dependency injection via this mock client.
+- Want template smoke tests? `tests/integration/test_cli_template.py` runs `python -m lllm.cli create --name demo --template init_template` inside a temp directory.
+- When you want parity with real OpenAI traffic, capture responses into JSON (see `tests/integration/recordings/sample_tool_call.json`) and point `load_recorded_completions` at your file. `tests/integration/test_tool_use_recording.py` shows how to replay those recordings without network access.
+- Optional future work: keep capturing real-provider recordings as APIs evolve, and consider running `examples/jupyter_sandbox_smoke.py` in CI to validate notebook tooling automatically.
 
 ## Testing
 

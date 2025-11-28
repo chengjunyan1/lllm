@@ -77,3 +77,13 @@ cp lllm.toml.example lllm.toml
 ```
 
 The sample points to `examples/autodiscovery/prompts/` and `examples/autodiscovery/proxies/`. Edit those folders (or add new ones) to register your own prompts and proxies automatically on import.
+
+## Developer Test Suite
+
+If you’re contributing to LLLM itself, run the full suite before sending a PR:
+
+```bash
+pytest
+```
+
+This command covers unit tests, sandbox mocks, CLI/template smoke tests, and the recorded OpenAI tool-call flows. When you need to refresh the recordings, update the JSON files under `tests/integration/recordings/` and rerun the integration tests.
