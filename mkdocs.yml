@@ -1,6 +1,9 @@
 site_name: LLLM
 site_url: https://example.com/
 site_description: A lightweight framework for researchers to fast-prototype advanced agentic systems.
+repo_url: https://github.com/ChengJunyan1/lllm
+repo_name: ChengJunyan1/lllm
+edit_uri: edit/main/docs/
 theme:
   name: material
   logo: assets/logo.png
@@ -22,6 +25,8 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
+  icon:
+    repo: fontawesome/brands/github
 
 nav:
   - Home: index.md
