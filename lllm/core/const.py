@@ -4,6 +4,11 @@ import datetime as dt
 import tiktoken
 from tiktoken.model import encoding_name_for_model
 from pydantic import BaseModel, Field, field_validator
+from pathlib import Path
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
 
 class RCollections(str, Enum):
     DIALOGS = 'dialogs'
@@ -150,42 +155,34 @@ def register_model_card(card: ModelCard):
     MODEL_CARDS[card.name] = card
 
 # Define standard models
-GPT_41 = ModelCard(
-    name='gpt-4.1',
-    provider=Providers.OPENAI,
-    snapshots=[Snapshot(name='gpt-4.1-2025-04-14', date='2025-04-14')],
-    max_tokens=1047576,
-    max_output_tokens=32768,
-    input_price=2,
-    cached_input_price=0.5,
-    output_price=8,
-    knowledge_cutoff='2024-06-01',
-    features=[
-        Features.FUNCTION_CALL, Features.STRUCTURED_OUTPUT, Features.STREAMING,
-        Features.FINETUNING, Features.DISTILLATION, Features.PREDICTED_OUTPUT,
-        Features.CLASSIFICATION
-    ]
-)
-register_model_card(GPT_41)
+def load_model_cards():
+    models_file = Path(__file__).parent / "models.toml"
+    if not models_file.exists():
+        return
 
-# ... (I will add other models later or in a separate file to keep this clean, but for now I'll add a few key ones)
+    with open(models_file, "rb") as f:
+        data = tomllib.load(f)
+    
+    for model_data in data.get("models", []):
+        # Convert string enums to Enum objects
+        if "provider" in model_data:
+            model_data["provider"] = Providers(model_data["provider"])
+        
+        if "features" in model_data:
+            model_data["features"] = [Features(f) for f in model_data["features"]]
+            
+        if "input_modalities" in model_data:
+            model_data["input_modalities"] = [Modalities(m) for m in model_data["input_modalities"]]
+            
+        # Handle snapshots
+        if "snapshots" in model_data:
+            model_data["snapshots"] = [Snapshot(**s) for s in model_data["snapshots"]]
+            
+        card = ModelCard(**model_data)
+        register_model_card(card)
 
-GPT_4O_MINI = ModelCard(
-    name='gpt-4o-mini',
-    provider=Providers.OPENAI,
-    snapshots=[Snapshot(name='gpt-4o-mini-2024-07-18', date='2024-07-18')],
-    max_tokens=128000,
-    max_output_tokens=16384,
-    input_price=0.15,
-    cached_input_price=0.075,
-    output_price=0.6,
-    knowledge_cutoff='2023-10-01',
-    features=[
-        Features.FUNCTION_CALL, Features.STRUCTURED_OUTPUT, Features.STREAMING,
-        Features.FINETUNING, Features.CLASSIFICATION
-    ]
-)
-register_model_card(GPT_4O_MINI)
+load_model_cards()
+
 
 LLM_SIDE_ROLES = [Roles.ASSISTANT, Roles.TOOL_CALL]
 
