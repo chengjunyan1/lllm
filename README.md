@@ -2,7 +2,7 @@
   <img src="assets/LLLM-logo.png" alt="LLLM Logo" width="600" style="margin-left:'auto' margin-right:'auto'"/>
   <br>
   <br>
-  <h1>Low-Level Language Models (LLLM) </h1>
+  <h1>Low-Level Language Model (LLLM) </h1>
 </div>
 
 LLLM is a lightweight framework designed to facilitate the rapid prototyping of advanced agentic systems. 
