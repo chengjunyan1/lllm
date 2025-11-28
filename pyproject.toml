@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "lllm"
 version = "0.0.0"
-description = "Low-Level Language Models toolkit for building agentic systems."
+description = "Low-Level Language Model framework for building LLM agentic systems."
 readme = "README.md"
 license = { file = "LICENSE" }
 authors = [{ name = "Junyan Cheng" }]

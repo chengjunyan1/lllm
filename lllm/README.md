@@ -1,4 +1,4 @@
-# Low-Level Languege Models (LLLM)  
+# Low-Level Languege Model (LLLM)  
 
 
 Providing minimal necessary tools needed for building LLM agents:
