@@ -1,9 +1,26 @@
 <div align="center">
   <img src="https://raw.githubusercontent.com/ChengJunyan1/lllm/main/assets/LLLM-logo.png" alt="LLLM Logo" width="600"/>
   <br>
-  <br>
   <h1>Low-Level Language Model (LLLM) </h1>
+  <h4>Lightweight framework for building complex agentic systems</h4>
 </div>
+<p align="center">
+  <a href="https://lllm.one">
+    <img alt="Docs" src="https://img.shields.io/badge/API-docs-red">
+  </a>
+  <a href="https://github.com/chengjunyan1/lllm/tree/main/examples">
+    <img alt="Examples" src="https://img.shields.io/badge/API-examples-994B00">
+  </a>
+  <a href="https://pypi.org/project/lllm-core/">
+    <img alt="Pypi" src="https://img.shields.io/pypi/v/lllm-core.svg">
+  </a>
+  <a href="https://github.com/chengjunyan1/lllm/blob/main/LICENSE">
+    <img alt="GitHub License" src="https://img.shields.io/github/license/chengjunyan1/lllm">
+  </a>
+  <a href="https://discord.gg/aTah8r7YpM">
+    <img alt="Discord" src="https://img.shields.io/badge/Discord%20-%20blue?style=flat&logo=discord&label=LLLM&color=%235B65E9">
+  </a>
+</p>
 
 LLLM is a lightweight framework designed to facilitate the rapid prototyping of advanced agentic systems. Allows users to build a complex agentic system with <100 LoC. 
 Prioritizing minimalism, modularity, and type safety, it is specifically optimized for research in program synthesis and neuro-symbolic AI. 
