@@ -132,3 +132,33 @@ pytest tests/
 - **Additional Providers** – Anthropic, Gemini, and other backends are planned but not yet implemented in `lllm.providers`.
 - **Streaming Hooks** – provider-agnostic streaming and incremental parsing are on the roadmap.
 - **Discovery UX** – improving the auto-discovery loop (reloading prompts/proxies without restarting) is tracked for an upcoming release.
+
+
+
+
+
+<!-- 
+git status          # ensure no stray files you don’t want in the sdist
+rm -rf dist build *.egg-info    # clean
+
+python -m build     # creates dist/lllm-<version>.tar.gz and .whl
+
+# test locally
+python -m venv /tmp/lllm-release
+source /tmp/lllm-release/bin/activate
+pip install dist/lllm-<version>-py3-none-any.whl
+python -c "import lllm; print(lllm.__version__)"
+deactivate
+
+# upload
+python -m twine upload dist/*
+
+# push tag
+git tag -a v0.1.0 -m "Release 0.1.0"
+git push origin main --tags 
+
+
+# update doc
+mkdocs build --strict
+mkdocs gh-deploy --force --clean
+-->
