@@ -57,3 +57,23 @@ print(agent("Hello!"))
 - Learn about [Agents](core/agents.md)
 - Explore [Prompts](core/prompts.md)
 - Check out [Examples](https://github.com/yourusername/lllm/tree/main/examples)
+
+## Sandbox Smoke Test
+
+Want to verify that the Jupyter sandbox works in your environment without writing code? Run:
+
+```bash
+python examples/jupyter_sandbox_smoke.py --session demo
+```
+
+This creates a notebook under `.lllm_sandbox/demo/demo.ipynb` with a sample markdown and code cell. Open it in Jupyter or VS Code to inspect the generated notebook and build from there.
+
+## Sample `lllm.toml`
+
+Auto-discovery is easiest to learn by copying the example config:
+
+```bash
+cp lllm.toml.example lllm.toml
+```
+
+The sample points to `examples/autodiscovery/prompts/` and `examples/autodiscovery/proxies/`. Edit those folders (or add new ones) to register your own prompts and proxies automatically on import.

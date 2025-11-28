@@ -1,0 +1,5 @@
+[prompts]
+folders = ["examples/autodiscovery/prompts"]
+
+[proxies]
+folders = ["examples/autodiscovery/proxies"]

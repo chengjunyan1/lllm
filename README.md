@@ -77,6 +77,8 @@ See `docs/` for detailed documentation.
 Check `examples/` for more usage scenarios:
 - `examples/basic_chat.py`
 - `examples/tool_use.py`
+- `examples/proxy_catalog.py`
+- `examples/jupyter_sandbox_smoke.py`
 
 ### Proxies & Tools
 
@@ -88,6 +90,22 @@ Built-in proxies (financial data, search, etc.) register automatically when thei
 This mirrors how prompts are auto-registered via `[prompts]` in `lllm.toml`.
 
 Once proxies are loaded you can check what is available by calling `Proxy().available()`.
+
+### Auto-Discovery Config
+
+A starter `lllm.toml.example` lives in the repo root. Copy it next to your project entry point and edit the folder paths:
+
+```bash
+cp lllm.toml.example lllm.toml
+```
+
+The sample configuration points to `examples/autodiscovery/prompts/` and `examples/autodiscovery/proxies/`, giving you a working prompt (`examples/hello_world`) and proxy (`examples/sample`) to experiment with immediately.
+
+## Testing & Offline Mocks
+
+- Run the full suite: `pytest`.
+- For an end-to-end agent/tool flow without real OpenAI requests, see `tests/integration/test_tool_use_mock_openai.py`. It uses the scripted client defined in `tests/helpers/mock_openai.py`, mirroring what a VCR fixture would capture.
+- When you eventually want to replay real HTTP exchanges, swap the scripted responses with your recorded payloads—the rest of the provider stack already supports dependency injection via this mock client.
 
 ## Testing
 
