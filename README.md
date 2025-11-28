@@ -29,6 +29,11 @@ LLLM bridges this gap by offering necessary abstractions that balance high-level
 It also tries to make the code plain, compact, easy-to-understand, with less unnecessary indirection, thus easy for customization for different projects' needs, to allow researchers to focus on the core research questions. See https://lllm.one for detailed documentation.
 
 
+## Installation
+
+```bash
+pip install lllm-core
+```
 
 ## Features
 
@@ -38,11 +43,6 @@ It also tries to make the code plain, compact, easy-to-understand, with less unn
 - **Neuro-Symbolic Design**: Advanced prompt management with structured output, exception handling, and interrupt logic.
 - **API Proxies**: Secure code execution of external APIs for program synthesis.
 
-## Installation
-
-```bash
-pip install lllm-core
-```
 
 ## Quick Start
 
