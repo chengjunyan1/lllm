@@ -12,4 +12,4 @@ from lllm.core.const import Roles, Modalities, Providers, Features, APITypes
 from lllm.proxies import BaseProxy, Proxy, register_proxy, ProxyRegistrator
 from lllm.sandbox.jupyter import JupyterSandbox, JupyterSession
 
-__version__ = "0.0.1.2"
+__version__ = "0.0.1.3"

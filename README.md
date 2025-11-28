@@ -168,7 +168,7 @@ deactivate
 python -m twine upload dist/*
 
 # push tag
-git tag -a v0.1.0 -m "Release 0.1.0"
+git tag -a v0.0.1.3 -m "Release 0.0.1.3"
 git push origin main --tags 
 
 
