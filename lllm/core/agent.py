@@ -89,7 +89,8 @@ class Agent:
         self.system_prompt = system_prompt
         
     # initialize the dialog
-    def init_dialog(self, prompt_args: Dict[str, Any] = {}, session_name: str = None) -> Dialog:
+    def init_dialog(self, prompt_args: Optional[Dict[str, Any]] = None, session_name: str = None) -> Dialog:
+        prompt_args = dict(prompt_args) if prompt_args else {}
         if session_name is None:
             session_name = dt.datetime.now().strftime('%Y%m%d_%H%M%S')+'_'+str(uuid.uuid4())[:6]
         system_message = Message(
@@ -105,16 +106,26 @@ class Agent:
         )
 
     # send a message to the dialog manually
-    def send_message(self, dialog: Dialog, prompt: Prompt, prompt_args: Dict[str, Any] = {}, 
-                     creator: str = 'internal', extra: Dict[str, Any] = {}, role: Roles = Roles.USER):
-        return dialog.send_message(prompt, prompt_args, creator=creator, extra=extra, role=role)
+    def send_message(
+        self,
+        dialog: Dialog,
+        prompt: Prompt,
+        prompt_args: Optional[Dict[str, Any]] = None,
+        creator: str = 'internal',
+        extra: Optional[Dict[str, Any]] = None,
+        role: Roles = Roles.USER,
+    ):
+        prompt_payload = dict(prompt_args) if prompt_args else None
+        extra_payload = dict(extra) if extra else None
+        return dialog.send_message(prompt, prompt_payload, creator=creator, extra=extra_payload, role=role)
 
     # it performs the "Agent Call"
-    def call(self, 
-        dialog: Dialog, # it assumes the prompt is already loaded into the dialog as the top prompt by send_message
-        extra: Dict[str, Any] = {}, # for tracking additional information, such as frontend replay info
-        args: Dict[str, Any] = {}, # for tracking additional information, such as frontend replay info
-        parser_args: Dict[str, Any] = {},   
+    def call(
+        self,
+        dialog: Dialog,  # it assumes the prompt is already loaded into the dialog as the top prompt by send_message
+        extra: Optional[Dict[str, Any]] = None,  # for tracking additional information, such as frontend replay info
+        args: Optional[Dict[str, Any]] = None,  # for tracking additional information, such as frontend replay info
+        parser_args: Optional[Dict[str, Any]] = None,
     ) -> Tuple[Message, Dialog, List[FunctionCall]]:
         """
         Executes the agent loop, handling LLM calls, tool execution, and interrupts.
@@ -131,6 +142,9 @@ class Agent:
         Raises:
             ValueError: If the agent fails to produce a valid response after retries.
         """
+        extra = dict(extra) if extra else {}
+        args = dict(args) if args else {}
+        parser_args = dict(parser_args) if parser_args else {}
         # Prompt: a function maps prompt args and dialog into the expected output 
         current_prompt = dialog.top_prompt or self.system_prompt
         interrupts = []

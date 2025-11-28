@@ -1,13 +1,15 @@
 import os
 import json
 import openai
-from typing import Any, Dict, Generator, List
+from typing import Any, Dict, List, Optional
+
 from lllm.core.models import Message, Prompt, FunctionCall, AgentException, TokenLogprob
-from lllm.core.const import Roles, Modalities, APITypes, Providers, find_model_card, Features
+from lllm.core.const import Roles, Modalities, APITypes, Providers, find_model_card
 from lllm.providers.base import BaseProvider
 
 class OpenAIProvider(BaseProvider):
-    def __init__(self, config: Dict[str, Any] = {}):
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        _ = config or {}
         assert os.getenv('OPENAI_API_KEY') is not None, "OPENAI_API_KEY is not set"
         self.client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY')) # Preserving env var name
         # Support for other base_urls (e.g. Together AI)
@@ -85,30 +87,34 @@ class OpenAIProvider(BaseProvider):
 
         return messages
 
-    def call(self, 
-             dialog: Any, 
-             prompt: Prompt,
-             model: str, 
-             model_args: Dict[str, Any] = {}, 
-             parser_args: Dict[str, Any] = {},
-             responder: str = 'assistant', 
-             extra: Dict[str, Any] = {}) -> Message:
+    def call(
+        self,
+        dialog: Any,
+        prompt: Prompt,
+        model: str,
+        model_args: Optional[Dict[str, Any]] = None,
+        parser_args: Optional[Dict[str, Any]] = None,
+        responder: str = 'assistant',
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> Message:
         
         model_card = find_model_card(model)
         client = self._get_client(model)
+        payload_args = dict(model_args) if model_args else {}
+        parser_args = dict(parser_args) if parser_args else {}
+        extra = dict(extra) if extra else {}
         
         # Determine if we are using Chat Completion or Response API (if applicable)
         # For now, following logic in LLMCaller._call_openai
         
         tools = self._build_tools(prompt)
-        call_args = model_args.copy()
+        call_args = dict(payload_args)
         
         if prompt.format is None:
             call_fn = client.chat.completions.create
             api_type = APITypes.COMPLETION
         else:
             call_fn = client.beta.chat.completions.parse
-            call_args = call_args.copy()
             call_args['response_format'] = prompt.format
             api_type = APITypes.RESPONSE
 

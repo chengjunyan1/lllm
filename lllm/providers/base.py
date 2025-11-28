@@ -1,27 +1,31 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Generator, Union
+from typing import Any, Dict, Generator, Optional
+
 from lllm.core.models import Message, Prompt
-from lllm.core.const import ModelCard
 
 class BaseProvider(ABC):
     @abstractmethod
-    def call(self, 
-             dialog: Any, # Typed as Any to avoid circular import with Dialog, or use 'Dialog' forward ref
-             prompt: Prompt,
-             model: str, 
-             model_args: Dict[str, Any] = {}, 
-             parser_args: Dict[str, Any] = {},
-             responder: str = 'assistant', 
-             extra: Dict[str, Any] = {}) -> Message:
+    def call(
+        self,
+        dialog: Any,  # Typed as Any to avoid circular import with Dialog, or use 'Dialog' forward ref
+        prompt: Prompt,
+        model: str,
+        model_args: Optional[Dict[str, Any]] = None,
+        parser_args: Optional[Dict[str, Any]] = None,
+        responder: str = 'assistant',
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> Message:
         pass
 
     @abstractmethod
-    def stream(self, 
-               dialog: Any, 
-               prompt: Prompt,
-               model: str, 
-               model_args: Dict[str, Any] = {}, 
-               parser_args: Dict[str, Any] = {},
-               responder: str = 'assistant', 
-               extra: Dict[str, Any] = {}) -> Generator[Any, None, Message]:
+    def stream(
+        self,
+        dialog: Any,
+        prompt: Prompt,
+        model: str,
+        model_args: Optional[Dict[str, Any]] = None,
+        parser_args: Optional[Dict[str, Any]] = None,
+        responder: str = 'assistant',
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> Generator[Any, None, Message]:
         pass

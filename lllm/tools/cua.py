@@ -12,6 +12,7 @@ from dataclasses import asdict, dataclass, field
 import json
 import os
 import uuid
+from typing import Any, Dict, Optional
 from lllm.core.dialog import Dialog
 from lllm.core.const import ParseError
 from lllm.utils import is_openai_rate_limit_error
@@ -325,7 +326,17 @@ class CUASession:
         )
 
     @classmethod
-    def new(cls, url, user_input, trace_dir, system=None, conclude=None, ckpt_dir=None, conclude_parser=None, metadata={}):
+    def new(
+        cls,
+        url,
+        user_input,
+        trace_dir,
+        system=None,
+        conclude=None,
+        ckpt_dir=None,
+        conclude_parser=None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ):
         """Create a new CUA session."""
         return cls(
             url=url,
@@ -335,7 +346,7 @@ class CUASession:
             conclude=conclude,
             ckpt_dir=ckpt_dir,
             conclude_parser=conclude_parser,
-            metadata=metadata
+            metadata=metadata or {}
         )
     
     @property
@@ -403,6 +414,7 @@ class OpenAICUA:
         for key, value in kwargs.items():
             _call_args[key] = value
         llm_recall = max(1, max_recall)
+        response = None
         while llm_recall>0:
             try:
                 response = await self._get_client().responses.create(**_call_args)
@@ -426,6 +438,8 @@ class OpenAICUA:
                         await asyncio.sleep(2)
                     else:
                         print("Max retries reached. Aborting.")
+        if response is None:
+            raise AgentException("Unable to obtain a response from the Computer Use API after retries.")
         sess.log_response(_call_args, response, previous_response_id)
         return response
 

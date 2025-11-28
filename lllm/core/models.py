@@ -39,9 +39,9 @@ class FunctionCall(BaseModel):
     def equals(self, other: 'FunctionCall') -> bool:
         if self.name != other.name:
             return False
+        if set(self.arguments.keys()) != set(other.arguments.keys()):
+            return False
         for k, v in self.arguments.items():
-            if k not in other.arguments:
-                return False
             if other.arguments[k] != v:
                 return False
         return True
@@ -236,6 +236,9 @@ class Prompt(BaseModel):
         if name in self.functions:
             self.functions[name].link_function(function)
 
+    def register_mcp_server(self, server: MCP):
+        self.mcp_servers[server.server_label] = server
+
     def __call__(self, **kwargs):
         if not kwargs:
             return self.prompt
@@ -313,5 +316,3 @@ def register_prompt(prompt: Prompt):
         # print(f"Warning: Prompt {prompt.path} already registered. Overwriting.")
         pass
     PROMPT_REGISTRY[prompt.path] = prompt
-    def register_mcp_server(self, server: MCP):
-        self.mcp_servers[server.server_label] = server

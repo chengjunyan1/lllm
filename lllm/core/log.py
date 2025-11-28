@@ -1,4 +1,4 @@
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import datetime as dt
 from dataclasses import dataclass
 import lllm.utils as U
@@ -18,12 +18,13 @@ class LogSession:
         self.collection = collection
         self.session_name = session_name
 
-    def log(self, value: str, metadata: Dict[str, Any] = {}):
+    def log(self, value: str, metadata: Optional[Dict[str, Any]] = None):
         """
         Log a value with metadata, this should be a stable interface for all loggers
         """
         timestamp = dt.datetime.now().isoformat()
-        self.db.write(timestamp, value, metadata, self.collection, self.session_name)
+        payload = dict(metadata) if metadata else {}
+        self.db.write(timestamp, value, payload, self.collection, self.session_name)
 
 class LogCollection:
     def __init__(self, db, collection: str):

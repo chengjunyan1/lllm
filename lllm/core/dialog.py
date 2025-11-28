@@ -65,27 +65,43 @@ class Dialog:
     def messages(self):
         return self._messages
     
-    def send_base64_image(self, image_base64: str, caption: str = None, creator: str = 'user', extra: Dict[str, Any] = {}, role: Roles = Roles.USER) -> Message:
+    def send_base64_image(
+        self,
+        image_base64: str,
+        caption: str = None,
+        creator: str = 'user',
+        extra: Optional[Dict[str, Any]] = None,
+        role: Roles = Roles.USER,
+    ) -> Message:
+        payload = dict(extra) if extra else {}
         if caption is not None:
-            extra['caption'] = caption
+            payload['caption'] = caption
         message = Message(
             role=role,
             content=image_base64,
             creator=creator,
             modality=Modalities.IMAGE,
-            extra=extra,
+            extra=payload,
         )
         self.append(message)
         return message
 
-    def send_message(self, prompt: Prompt | str, prompt_args: Dict[str, Any] = {}, creator: str = 'user', # or 'user', etc.
-                     extra: Dict[str, Any] = {}, role: Roles = Roles.USER) -> Message:
+    def send_message(
+        self,
+        prompt: Prompt | str,
+        prompt_args: Optional[Dict[str, Any]] = None,
+        creator: str = 'user',  # or 'user', etc.
+        extra: Optional[Dict[str, Any]] = None,
+        role: Roles = Roles.USER,
+    ) -> Message:
+        prompt_args = dict(prompt_args) if prompt_args else {}
+        metadata = dict(extra) if extra else {}
         if isinstance(prompt, str):
-            assert prompt_args == {}, f"Prompt args are not allowed for string prompt"
+            assert not prompt_args, "Prompt args are not allowed for string prompt"
             # Create a temporary prompt object
             prompt = Prompt(path='__temp_prompt_'+str(uuid.uuid4())[:6], prompt=prompt)
             content = prompt.prompt
-        elif prompt_args == {}:
+        elif not prompt_args:
             content = prompt.prompt
         else:
             content = prompt(**prompt_args)
@@ -94,7 +110,7 @@ class Dialog:
             content=content,
             creator=creator,
             modality=Modalities.TEXT,
-            extra=extra
+            extra=metadata
         )
         self.append(message)
         self.top_prompt = prompt
