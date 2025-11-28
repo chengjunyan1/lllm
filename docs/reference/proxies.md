@@ -7,6 +7,13 @@
       show_root_heading: true
       show_source: true
 
+## Proxy
+
+::: lllm.proxies.base.Proxy
+    options:
+      show_root_heading: true
+      show_source: true
+
 ## ProxyRegistrator
 
 ::: lllm.proxies.base.ProxyRegistrator

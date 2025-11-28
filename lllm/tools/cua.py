@@ -128,7 +128,7 @@ class ComputerUseHandler:
         return None
 
     async def handle_action(self, page, action):
-        raise NotImplementedError("handle_action is not implemented in the base class, please implement it in the derived class.")
+        # raise NotImplementedError("handle_action is not implemented in the base class, please implement it in the derived class.")
 
         """Handle different action types from the model."""
         action_type = action.type

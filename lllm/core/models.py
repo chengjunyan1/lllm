@@ -132,6 +132,16 @@ class MCP(BaseModel):
             return tool
         return None
 
+class TokenLogprob(BaseModel):
+    token: Optional[str] = None
+    logprob: Optional[float] = None
+    bytes: Optional[List[int]] = None
+    top_logprobs: List['TokenLogprob'] = Field(default_factory=list)
+
+    model_config = ConfigDict(extra="allow")
+
+TokenLogprob.model_rebuild()
+
 class Message(BaseModel):
     role: Roles
     content: Union[str, List[Dict[str, Any]]] # Content can be string or list of content parts (for images)
@@ -139,7 +149,7 @@ class Message(BaseModel):
     raw_response: Any = None
     function_calls: List[FunctionCall] = Field(default_factory=list)
     modality: Modalities = Modalities.TEXT
-    logprobs: List[float] = Field(default_factory=list)
+    logprobs: List[TokenLogprob] = Field(default_factory=list)
     parsed: Dict[str, Any] = Field(default_factory=dict)
     model: Optional[str] = None
     usage: Dict[str, float] = Field(default_factory=dict)
@@ -150,6 +160,25 @@ class Message(BaseModel):
     api_type: APITypes = APITypes.COMPLETION
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    @field_validator("logprobs", mode="before")
+    @classmethod
+    def _coerce_logprobs(cls, value):
+        if not value:
+            return []
+        normalized: List[TokenLogprob] = []
+        for entry in value:
+            if isinstance(entry, TokenLogprob):
+                normalized.append(entry)
+                continue
+            if isinstance(entry, dict):
+                normalized.append(TokenLogprob(**entry))
+                continue
+            if isinstance(entry, (int, float)):
+                normalized.append(TokenLogprob(logprob=float(entry)))
+                continue
+            normalized.append(TokenLogprob(token=str(entry)))
+        return normalized
 
     @property
     def error_message(self):

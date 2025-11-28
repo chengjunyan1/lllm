@@ -2,7 +2,7 @@ import os
 import json
 import openai
 from typing import Any, Dict, Generator, List
-from lllm.core.models import Message, Prompt, FunctionCall, AgentException
+from lllm.core.models import Message, Prompt, FunctionCall, AgentException, TokenLogprob
 from lllm.core.const import Roles, Modalities, APITypes, Providers, find_model_card, Features
 from lllm.providers.base import BaseProvider
 
@@ -146,7 +146,11 @@ class OpenAIProvider(BaseProvider):
                 content = choice.message.content
                 logprobs = choice.logprobs.content if choice.logprobs is not None else None
                 if logprobs is not None:
-                    logprobs = [logprob.model_dump() for logprob in logprobs]
+                    converted = []
+                    for logprob in logprobs:
+                        payload = logprob.model_dump() if hasattr(logprob, "model_dump") else logprob
+                        converted.append(TokenLogprob.model_validate(payload))
+                    logprobs = converted
                 try:
                     parsed = prompt.parser(content, **parser_args) if prompt.parser is not None else None
                 except Exception as e: # Catching generic exception as ParseError might be imported differently
