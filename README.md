@@ -75,7 +75,7 @@ print(agent("Hello!"))
 
 ## Documentation
 
-See `docs/` for detailed documentation.
+See https://junyan.ch/lllm for detailed documentation.
 
 ## Examples
 
