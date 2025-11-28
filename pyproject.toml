@@ -29,6 +29,8 @@ lllm = "lllm.cli:main"
 [project.urls]
 Homepage = "https://github.com/ChengJunyan1/lllm"
 Source = "https://github.com/ChengJunyan1/lllm"
+Documentation = "https://lllm.one"
+
 
 [tool.setuptools.packages.find]
 where = ["."]

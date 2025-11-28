@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/LLLM-logo.png" alt="LLLM Logo" width="600" style="margin-left:'auto' margin-right:'auto'"/>
+  <img src="https://raw.githubusercontent.com/ChengJunyan1/lllm/main/assets/LLLM-logo.png" alt="LLLM Logo" width="600"/>
   <br>
   <br>
   <h1>Low-Level Language Model (LLLM) </h1>
