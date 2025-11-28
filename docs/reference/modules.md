@@ -7,9 +7,10 @@ This section lists the primary modules in the repository with short descriptions
 | File | Description |
 | --- | --- |
 | `lllm/__init__.py` | Public package exports and `auto_discover()` invocation. |
-| `lllm/llm.py` | Agent framework (dialogs, agent call loop, classifier helpers, `LLMCaller`, `LLMResponder`, prompt registry utilities). |
+| `lllm/llm.py` | Agent framework (dialogs, agent call loop, classifier helpers, prompt registry utilities). |
 | `lllm/models.py` | Dataclasses for `Prompt`, `Message`, `Function`, `FunctionCall`, MCP descriptors, and parsing helpers. |
 | `lllm/const.py` | Enumerations (roles, providers, features), model cards, pricing utilities, and tokenizer helpers. |
+| `lllm/providers/` | Provider registry plus concrete backends (currently OpenAI chat/responses) implementing `BaseProvider`. |
 | `lllm/log.py` | Replayable logging base classes plus `LocalFileLog` and `NoLog`. |
 | `lllm/utils.py` | Filesystem helpers, caching, HTML utilities, frontend wrappers, and HTTP helper functions (`call_api`, `directory_tree`, etc.). |
 | `lllm/config.py` | Functions for locating and loading `lllm.toml`, plus environment-variable guards. |

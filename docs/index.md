@@ -23,3 +23,13 @@ pip install lllm
 ```
 
 See [Getting Started](getting-started.md) for more details.
+
+## Experimental Features
+
+- `lllm.tools.cua` (Computer Use Agent) integrates with Playwright and the OpenAI Computer Use API. Expect rapid iteration and breaking changes.
+- Responses API routing is available per agent via `api_type = "response"`; today it only targets OpenAI models that advertise the requisite features.
+
+## Work in Progress
+
+- Additional providers (Anthropic, Gemini, local runtimes) are on the roadmap but not yet available in the `lllm.providers` registry.
+- Provider-agnostic streaming and richer auto-discovery ergonomics (hot-reloading prompts/proxies) are actively being designed.
