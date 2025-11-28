@@ -201,3 +201,34 @@ def test_run_cell_records_execute_result(session_dir, session_metadata):
     outputs = nb.cells[cell_index].outputs
     assert outputs
     assert outputs[0]["data"]["text/plain"] == "42"
+
+
+def test_session_autorun_flag(monkeypatch, session_dir, session_metadata):
+    session_dir.mkdir(parents=True, exist_ok=True)
+    calls = {"count": 0}
+
+    def fake_run_all(self):
+        calls["count"] += 1
+        return 0
+
+    monkeypatch.setattr("lllm.sandbox.jupyter.JupyterSession.run_all_cells", fake_run_all, raising=False)
+
+    metadata = session_metadata.copy()
+    metadata["autorun"] = False
+    JupyterSession(
+        name="no_autorun",
+        dir=session_dir.as_posix(),
+        metadata=metadata,
+        programming_language=ProgrammingLanguage.PYTHON,
+    )
+    assert calls["count"] == 0
+
+    metadata = session_metadata.copy()
+    metadata["autorun"] = True
+    JupyterSession(
+        name="yes_autorun",
+        dir=session_dir.as_posix(),
+        metadata=metadata,
+        programming_language=ProgrammingLanguage.PYTHON,
+    )
+    assert calls["count"] == 1

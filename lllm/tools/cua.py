@@ -2,6 +2,8 @@
 # Given a URL, and the task, the CUA will try to complete the task
 # Supports customized system prompt, task prompt, and conclusion prompt
 
+# Experimental supported now
+
 import base64
 import asyncio
 import functools as ft
@@ -9,11 +11,10 @@ from dataclasses import asdict, dataclass, field
 import json
 import os
 import uuid
-# from playwright.async_api import TimeoutError, async_playwright
 from lllm.core.dialog import Dialog
 from lllm.core.const import ParseError
 from lllm.utils import is_openai_rate_limit_error
-from openai import AsyncAzureOpenAI, RateLimitError
+from openai import RateLimitError
 from enum import Enum
 import datetime as dt
 import random
@@ -21,6 +22,38 @@ import time
 
 
 from tqdm import tqdm
+
+last_successful_screenshot = None
+
+
+def _load_async_azure_openai():
+    try:
+        from openai import AsyncAzureOpenAI
+    except ImportError as exc:
+        raise RuntimeError(
+            "AsyncAzureOpenAI client is unavailable. Install the official openai package "
+            "with Azure extras to use the Computer Use Agent."
+        ) from exc
+    return AsyncAzureOpenAI
+
+
+_PLAYWRIGHT_LOADER = None
+_PLAYWRIGHT_TIMEOUT = None
+
+
+def _ensure_playwright():
+    global _PLAYWRIGHT_LOADER, _PLAYWRIGHT_TIMEOUT
+    if _PLAYWRIGHT_LOADER is None:
+        try:
+            from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
+        except ImportError as exc:
+            raise RuntimeError(
+                "Playwright is required for the Computer Use Agent. "
+                "Install it with `pip install playwright` to enable browser automation."
+            ) from exc
+        _PLAYWRIGHT_LOADER = async_playwright
+        _PLAYWRIGHT_TIMEOUT = PlaywrightTimeoutError
+    return _PLAYWRIGHT_LOADER, _PLAYWRIGHT_TIMEOUT
 
 
 class ControlSignals(Enum):
@@ -311,7 +344,7 @@ The result of the task is as follows:
 
 class OpenAICUA:
 
-    def __init__(self, cua_configs):
+    def __init__(self, cua_configs, client=None):
         self.cua_configs = cua_configs
         for key in _DEFAULT_CUA_CONFIGS:
             if key not in self.cua_configs:
@@ -324,11 +357,27 @@ class OpenAICUA:
         self.DISPLAY_WIDTH = self.handler.DISPLAY_WIDTH
         self.DISPLAY_HEIGHT = self.handler.DISPLAY_HEIGHT
         self.model = 'computer-use-preview'
-        # self.client = AsyncAzureOpenAI(
-        #     api_key=os.getenv("CUA_API_KEY"),  
-        #     api_version="2025-04-01-preview",
-        #     azure_endpoint=os.getenv("AZURE_CUA_ENDPOINT")
-        # )
+        self._client = client
+
+    def _get_client(self):
+        if self._client is not None:
+            return self._client
+
+        api_key = os.getenv("CUA_API_KEY")
+        endpoint = os.getenv("AZURE_CUA_ENDPOINT")
+        if not api_key or not endpoint:
+            raise RuntimeError(
+                "OpenAICUA requires either an explicit client instance or the "
+                "CUA_API_KEY and AZURE_CUA_ENDPOINT environment variables."
+            )
+        api_version = os.getenv("CUA_API_VERSION", "2025-04-01-preview")
+        AsyncAzureOpenAI = _load_async_azure_openai()
+        self._client = AsyncAzureOpenAI(
+            api_key=api_key,
+            api_version=api_version,
+            azure_endpoint=endpoint,
+        )
+        return self._client
 
     async def create_response(self, sess, input, previous_response_id=None, max_recall=3, **kwargs):
         """Create a response object for the model."""
@@ -349,7 +398,7 @@ class OpenAICUA:
         llm_recall = max(1, max_recall)
         while llm_recall>0:
             try:
-                response = await self.client.responses.create(**_call_args)
+                response = await self._get_client().responses.create(**_call_args)
                 break
             except RateLimitError as e:
                 wait_time = random.random()*15+1
@@ -645,8 +694,7 @@ class OpenAICUA:
     async def call(self, url, user_input, system, conclude=None, conclude_parser=None, safety_checks=False, 
                    wait_until="domcontentloaded", headless=False, ckpt_dir=None, metadata=None, trace_dir=None) -> CUASession:
         
-        raise NotImplementedError("CUA is not implemented in the base class, please implement it in the derived class.")
-        # Initialize Playwright
+        async_playwright, _ = _ensure_playwright()
         DISPLAY_WIDTH = self.handler.DISPLAY_WIDTH
         DISPLAY_HEIGHT = self.handler.DISPLAY_HEIGHT
         report = None

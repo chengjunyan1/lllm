@@ -83,6 +83,8 @@ class Proxy:
     """
 
     def __init__(self, activate_proxies: Optional[List[str]] = None, cutoff_date: dt.datetime = None, deploy_mode: bool = False):
+        from lllm.core.discovery import auto_discover
+        auto_discover()
         self.activate_proxies = activate_proxies or []
         self.cutoff_date = cutoff_date
         self.deploy_mode = deploy_mode

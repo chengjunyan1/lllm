@@ -28,59 +28,61 @@ class OpenAIProvider(BaseProvider):
         return self.client
 
     def _convert_dialog(self, dialog: Any) -> List[Dict[str, Any]]:
-        # Logic moved from Dialog.openai
-        messages = []
+        """Convert internal Dialog state into OpenAI-compatible messages."""
+        messages: List[Dict[str, Any]] = []
         for message in dialog.messages:
-            if message.role in [Roles.ASSISTANT, Roles.TOOL_CALL]: # from_llm_side
-                _api_type = APITypes(message.extra.get('api_type', APITypes.COMPLETION.value))
-                if _api_type == APITypes.COMPLETION.value:
-                    # Reconstruct the message object expected by OpenAI
-                    # This is tricky because we stored raw_response.choices[0].message
-                    # We need to reconstruct it from our Message object if raw_response is missing or not serializable
-                    if message.raw_response:
-                         messages.append(message.raw_response.choices[0].message)
-                    else:
-                        # Fallback reconstruction
-                        msg = {"role": "assistant", "content": message.content}
-                        if message.function_calls:
-                            msg["tool_calls"] = [
-                                {"id": fc.id, "type": "function", "function": {"name": fc.name, "arguments": json.dumps(fc.arguments)}}
-                                for fc in message.function_calls
-                            ]
-                        messages.append(msg)
+            if message.role in (Roles.ASSISTANT, Roles.TOOL_CALL):
+                assistant_entry: Dict[str, Any] = {
+                    "role": "assistant",
+                    "content": message.content,
+                }
+                if message.function_calls:
+                    assistant_entry["tool_calls"] = [
+                        {
+                            "id": fc.id,
+                            "type": "function",
+                            "function": {
+                                "name": fc.name,
+                                "arguments": json.dumps(fc.arguments),
+                            },
+                        }
+                        for fc in message.function_calls
+                    ]
+                messages.append(assistant_entry)
+                continue
 
-                elif _api_type == APITypes.RESPONSE.value:
-                    if message.raw_response:
-                        messages.extend(message.raw_response.output)
-                    else:
-                         # Fallback?
-                         pass
-            else:
-                if message.role == Roles.TOOL:
-                    if 'tool_call_id' not in message.extra:
-                         raise ValueError(f"Tool call id is not found in the message extra for tool message: {message}")
-                    messages.append({
+            if message.role == Roles.TOOL:
+                tool_call_id = message.extra.get("tool_call_id")
+                if not tool_call_id:
+                    raise ValueError(
+                        "Tool call id is not found in the message extra for tool message: "
+                        f"{message}"
+                    )
+                messages.append(
+                    {
                         "role": "tool",
                         "content": message.content,
-                        "tool_call_id": message.extra['tool_call_id']
-                    })
-                else:
-                    if message.modality == Modalities.IMAGE:
-                        _content = []
-                        if 'caption' in message.extra:
-                            _content.append({ "type": "text", "text": message.extra['caption'] })
-                        _content.append({ "type": "image_url", "image_url": { "url": f"data:image/jpeg;base64,{message.content}" } })
-                        messages.append({
-                            "role": message.role.value,
-                            "content": _content
-                        })
-                    elif message.modality == Modalities.TEXT:   
-                        messages.append({
-                            "role": message.role.value,
-                            "content": message.content
-                        })
-                    else:
-                        raise ValueError(f"Unsupported modality: {message.modality}")
+                        "tool_call_id": tool_call_id,
+                    }
+                )
+                continue
+
+            if message.modality == Modalities.IMAGE:
+                content_parts = []
+                if "caption" in message.extra:
+                    content_parts.append({"type": "text", "text": message.extra["caption"]})
+                content_parts.append(
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{message.content}"}}
+                )
+                messages.append({"role": message.role.openai, "content": content_parts})
+                continue
+
+            if message.modality == Modalities.TEXT:
+                messages.append({"role": message.role.openai, "content": message.content})
+                continue
+
+            raise ValueError(f"Unsupported modality: {message.modality}")
+
         return messages
 
     def call(self, 

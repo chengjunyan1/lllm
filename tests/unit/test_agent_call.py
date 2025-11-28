@@ -2,7 +2,7 @@ import uuid
 
 import pytest
 
-from lllm.core.const import Roles
+from lllm.core.const import Roles, APITypes
 from lllm.core.models import Function, FunctionCall, Message, Prompt
 from lllm.providers.base import BaseProvider
 from tests.helpers.agent_utils import make_agent
@@ -95,3 +95,52 @@ def test_agent_call_executes_registered_function(log_config):
     assert len(interrupts) == 1
     assert calls == ["foo"]
     assert interrupts[0].result == "echo:foo"
+
+
+def test_agent_call_uses_tool_role_for_response_api(log_config):
+    def _noop_tool(value: str) -> str:
+        return value.upper()
+
+    tool = Function(
+        name="shout",
+        description="Upper-case text",
+        properties={"value": {"type": "string"}},
+        required=["value"],
+    )
+    tool.link_function(_noop_tool)
+
+    system_prompt = Prompt(path="tests/response/system", prompt="Use tools.")
+    task_prompt = Prompt(
+        path="tests/response/query",
+        prompt="Task: {task}",
+        functions_list=[tool],
+    )
+
+    tool_call_message = Message(
+        role=Roles.TOOL_CALL,
+        creator="assistant",
+        content="Calling shout",
+        function_calls=[
+            FunctionCall(id="call_123", name="shout", arguments={"value": "ping"})
+        ],
+        model="gpt-4o-mini",
+        api_type=APITypes.RESPONSE,
+    )
+    final_message = Message(
+        role=Roles.ASSISTANT,
+        creator="assistant",
+        content="Done.",
+        model="gpt-4o-mini",
+        api_type=APITypes.RESPONSE,
+    )
+
+    provider = FakeProvider([tool_call_message, final_message])
+    agent = make_agent(system_prompt, provider, log_config)
+    dialog = agent.init_dialog()
+    dialog.send_message(task_prompt, {"task": "run shout"})
+
+    agent.call(dialog)
+
+    tool_messages = [msg for msg in dialog.messages if msg.role == Roles.TOOL]
+    assert tool_messages, "tool response should be logged as TOOL role"
+    assert all(msg.role == Roles.TOOL for msg in tool_messages)

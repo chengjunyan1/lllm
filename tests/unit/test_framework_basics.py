@@ -1,10 +1,11 @@
 import uuid
+import types
 
 import pytest
 
-from lllm.core.models import PROMPT_REGISTRY, Prompt, Message
+from lllm.core.models import PROMPT_REGISTRY, Prompt, Message, FunctionCall
 from lllm.core.const import APITypes, Roles, find_model_card
-from lllm.llm import Prompts, register_prompt
+from lllm.llm import Prompts, register_prompt, AgentBase
 from lllm.proxies import (
     BaseProxy,
     Proxy,
@@ -12,6 +13,7 @@ from lllm.proxies import (
     ProxyRegistrator,
     load_builtin_proxies,
 )
+from lllm.providers.openai import OpenAIProvider
 
 
 @pytest.fixture
@@ -86,3 +88,78 @@ def test_load_builtin_proxies_handles_missing_modules():
     assert "lllm.proxies.builtin" in loaded
     _, errors = load_builtin_proxies(modules=["lllm.does.not.exist"])
     assert "lllm.does.not.exist" in errors
+
+
+def test_proxy_instantiation_runs_auto_discover(monkeypatch, proxy_registry_cleanup):
+    call_count = {"value": 0}
+
+    def _fake_auto_discover(*_, **__):
+        call_count["value"] += 1
+
+    monkeypatch.setattr("lllm.core.discovery.auto_discover", _fake_auto_discover, raising=True)
+    Proxy()
+    assert call_count["value"] == 1
+
+def test_agent_base_triggers_auto_discover(monkeypatch, tmp_path, prompt_registry_cleanup):
+    call_count = {"value": 0}
+
+    def _fake_auto_discover(*_, **__):
+        call_count["value"] += 1
+
+    monkeypatch.setattr("lllm.core.agent.auto_discover", _fake_auto_discover, raising=True)
+    monkeypatch.setattr("lllm.core.agent.OpenAIProvider", lambda config: object())
+
+    prompt = Prompt(path="mini/system", prompt="System prompt")
+    register_prompt(prompt)
+
+    class MiniAgent(AgentBase, register=False):
+        agent_type = "mini-agent"
+        agent_group = ["mini"]
+
+        def call(self, task: str, **kwargs):
+            return task
+
+    config = {
+        "name": "mini",
+        "log_dir": tmp_path.as_posix(),
+        "log_type": "none",
+        "agent_configs": {
+            "mini": {
+                "model_name": "gpt-4o-mini",
+                "system_prompt_path": "mini/system",
+            }
+        },
+    }
+
+    MiniAgent(config, ckpt_dir=tmp_path.as_posix(), stream=None)
+    assert call_count["value"] == 1
+
+
+def test_convert_dialog_handles_response_messages(monkeypatch):
+    provider = OpenAIProvider.__new__(OpenAIProvider)
+    tool_call = FunctionCall(id="call-1", name="echo", arguments={"value": "test"})
+    dialog = types.SimpleNamespace(
+        messages=[
+            Message(
+                role=Roles.TOOL_CALL,
+                content="Calling echo",
+                creator="assistant",
+                function_calls=[tool_call],
+                model="gpt-4o-mini",
+                api_type=APITypes.RESPONSE,
+            ),
+            Message(
+                role=Roles.TOOL,
+                content="ok",
+                creator="tool",
+                extra={"tool_call_id": "call-1"},
+                model="gpt-4o-mini",
+            ),
+        ]
+    )
+
+    converted = provider._convert_dialog(dialog)
+    assert converted[0]["role"] == "assistant"
+    assert converted[0]["tool_calls"][0]["function"]["name"] == "echo"
+    assert converted[1]["role"] == "tool"
+    assert converted[1]["tool_call_id"] == "call-1"

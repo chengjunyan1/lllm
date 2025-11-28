@@ -16,6 +16,7 @@ from lllm.core.log import ReplayableLogBase, build_log_base
 from lllm.providers.base import BaseProvider
 from lllm.providers.openai import OpenAIProvider
 import lllm.utils as U
+from lllm.core.discovery import auto_discover
 
 AGENT_REGISTRY: Dict[str, Type['AgentBase']] = {}
 
@@ -191,7 +192,7 @@ class Agent:
                         function_call = function(function_call)
                         result_str = function_call.result_str
                         interrupts.append(function_call)
-                    _role = Roles.TOOL if response.api_type == APITypes.COMPLETION else Roles.USER
+                    _role = Roles.TOOL
                     dialog.send_message(current_prompt.interrupt_handler, {'call_results': result_str}, 
                                         role=_role, creator='function', extra={'tool_call_id': function_call.id})
                 if i == self.max_interrupt_times-1:
@@ -267,6 +268,7 @@ class AgentBase:
             register_agent_class(cls)
 
     def __init__(self, config: Dict[str, Any], ckpt_dir: str, stream = None):
+        auto_discover()
         if stream is None:
             stream = U.PrintSystem()
         self.config = config

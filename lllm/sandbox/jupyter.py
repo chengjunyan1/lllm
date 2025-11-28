@@ -16,8 +16,6 @@ from enum import Enum
 import lllm.utils as U
 import atexit
 
-KernelManager.transport = "ipc"
-
 
 class JupyterCellType(str, Enum):
     MARKDOWN = 'markdown'
@@ -56,7 +54,8 @@ class JupyterSession:
 
     def __post_init__(self):
         self.init_session()
-        self.run_all_cells()
+        if self.metadata.get('autorun', False):
+            self.run_all_cells()
 
     def init_session(self):
         _cutoff_date = self.metadata['proxy']['cutoff_date']
@@ -570,7 +569,8 @@ class JupyterSandbox:
         for sess in self.active_sessions.values():
             sess.verbose()
 
-    def new_session(self, name: Optional[str] = None, metadata: Dict[str, Any] = {}, path = None) -> JupyterSession:
+    def new_session(self, name: Optional[str] = None, metadata: Optional[Dict[str, Any]] = None, path: Optional[str] = None) -> JupyterSession:
+        metadata = (metadata or {}).copy()
         # project_root is the root directory of the project, it is used to load the proxy 
         proxy_cfg = metadata.get('proxy', {})
         proxy_cfg['activate_proxies'] = proxy_cfg.get('activate_proxies', self.config['activate_proxies'])
@@ -578,6 +578,7 @@ class JupyterSandbox:
         proxy_cfg['deploy_mode'] = proxy_cfg.get('deploy_mode', False)
         metadata['project_root'] = self.project_root
         metadata['proxy'] = proxy_cfg
+        metadata.setdefault('autorun', self.config.get('autorun_sessions', False))
 
         session_name_base = name if name else dt.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')+'_'+uuid.uuid4().hex[:6]
         session_name = session_name_base
@@ -599,7 +600,7 @@ class JupyterSandbox:
         return sess
     
 
-    def get_session(self, session_name: str, create: bool = True, metadata: Dict[str, Any] = {}, path = None) -> Optional[JupyterSession]: # Changed default create to False
+    def get_session(self, session_name: str, create: bool = True, metadata: Optional[Dict[str, Any]] = None, path: Optional[str] = None) -> Optional[JupyterSession]: # Changed default create to False
         if session_name in self.active_sessions:
             return self.active_sessions[session_name]
         

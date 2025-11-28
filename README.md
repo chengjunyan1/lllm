@@ -16,7 +16,7 @@ LLLM bridges this gap by offering necessary abstractions that balance high-level
 
 - **Modular Architecture**: Core abstractions, providers, tools, and memory are decoupled.
 - **Type Safety**: Built on Pydantic for robust data validation and strict typing.
-- **Multi-Provider Support**: First-class support for OpenAI, with an extensible provider interface.
+- **Provider Interface**: First-class OpenAI support with an extensible interface for adding more providers as needed.
 - **Neuro-Symbolic Design**: Advanced prompt management with structured output, exception handling, and interrupt logic.
 - **Jupyter Sandbox**: Secure code execution environment for program synthesis.
 
