@@ -14,7 +14,17 @@ class FakeProvider(BaseProvider):
     def __init__(self, responses):
         self._responses = list(responses)
 
-    def call(self, dialog, prompt, model, model_args=None, parser_args=None, responder='assistant', extra=None):
+    def call(
+        self,
+        dialog,
+        prompt,
+        model,
+        model_args=None,
+        parser_args=None,
+        responder='assistant',
+        extra=None,
+        api_type=APITypes.COMPLETION,
+    ):
         if not self._responses:
             raise AssertionError("FakeProvider received more calls than responses")
         response = self._responses.pop(0)

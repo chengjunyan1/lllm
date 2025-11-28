@@ -60,6 +60,7 @@ class Agent:
     model: str # the latest snapshot of a model
     llm_provider: BaseProvider
     log_base: ReplayableLogBase   
+    api_type: APITypes = APITypes.COMPLETION
     model_args: Dict[str, Any] = field(default_factory=dict) # additional args, like temperature, seed, etc.
     max_exception_retry: int = 3
     max_interrupt_times: int = 5
@@ -158,8 +159,16 @@ class Agent:
                     _model_args = self.model_args.copy()
                     _model_args.update(args)
                     
-                    response = self.llm_provider.call(working_dialog, current_prompt, self.model, _model_args, 
-                                                    parser_args=parser_args, responder=self.name, extra=extra)
+                    response = self.llm_provider.call(
+                        working_dialog,
+                        current_prompt,
+                        self.model,
+                        _model_args,
+                        parser_args=parser_args,
+                        responder=self.name,
+                        extra=extra,
+                        api_type=self.api_type,
+                    )
                     working_dialog.append(response) 
                     if response.execution_errors != []:
                         execution_attempts.append(response)
@@ -307,6 +316,11 @@ class AgentBase:
             model_name = model_config.pop('model_name')
             self.model = find_model_card(model_name)
             system_prompt_path = model_config.pop('system_prompt_path')
+            api_type_value = model_config.pop('api_type', APITypes.COMPLETION.value)
+            if isinstance(api_type_value, APITypes):
+                api_type = api_type_value
+            else:
+                api_type = APITypes(api_type_value)
             
             # We assume PROMPT_REGISTRY is available globally or passed. 
             # This is a bit of a dependency issue. 
@@ -319,6 +333,7 @@ class AgentBase:
                 system_prompt=PROMPT_REGISTRY[system_prompt_path],
                 model=model_name,
                 llm_provider=self.llm_provider,
+                api_type=api_type,
                 model_args=model_config,
                 log_base=self._log_base,
                 max_exception_retry=self.config.get('max_exception_retry', 3),

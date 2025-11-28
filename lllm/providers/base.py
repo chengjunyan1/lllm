@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Generator, Optional
 
+from lllm.core.const import APITypes
 from lllm.core.models import Message, Prompt
 
 class BaseProvider(ABC):
@@ -14,6 +15,7 @@ class BaseProvider(ABC):
         parser_args: Optional[Dict[str, Any]] = None,
         responder: str = 'assistant',
         extra: Optional[Dict[str, Any]] = None,
+        api_type: APITypes = APITypes.COMPLETION,
     ) -> Message:
         pass
 
@@ -27,5 +29,6 @@ class BaseProvider(ABC):
         parser_args: Optional[Dict[str, Any]] = None,
         responder: str = 'assistant',
         extra: Optional[Dict[str, Any]] = None,
+        api_type: APITypes = APITypes.COMPLETION,
     ) -> Generator[Any, None, Message]:
         pass
