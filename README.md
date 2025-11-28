@@ -24,7 +24,7 @@ It also tries to make the code plain, compact, easy-to-understand, with less unn
 ## Installation
 
 ```bash
-pip install -e .
+pip install lllm-core
 ```
 
 ## Quick Start
