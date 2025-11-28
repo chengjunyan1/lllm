@@ -1,6 +1,6 @@
 from __future__ import annotations
-from typing import List, Dict, Any, Callable, Optional, Union
-from pydantic import BaseModel, Field, ConfigDict
+from typing import List, Dict, Any, Callable, Optional, Union, Literal
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from lllm.core.const import (
     Roles,
     Modalities,
@@ -108,22 +108,28 @@ class Function(BaseModel):
 class MCP(BaseModel):
     server_label: str
     server_url: str
-    require_approval: bool = False # 'never' in original, changed to bool for simplicity or keep str if needed. Original was 'never' (str) but typed as bool?
-    # Original: require_approval: bool = 'never' -> This is weird. Let's assume it's a string or bool.
-    # If it was 'never', it should be a string.
+    require_approval: Literal["never", "manual", "auto"] = "never"
     allowed_tools: Optional[List[str]] = None
+
+    @field_validator("require_approval")
+    @classmethod
+    def _validate_approval(cls, value: str) -> str:
+        allowed = {"never", "manual", "auto"}
+        if value not in allowed:
+            raise ValueError(f"require_approval must be one of {allowed}, got {value}")
+        return value
 
     def to_tool(self, provider: Providers):
         if provider == Providers.OPENAI:
-             _tool = {
+            tool: Dict[str, Any] = {
                 "type": "mcp",
                 "server_label": self.server_label,
                 "server_url": self.server_url,
                 "require_approval": self.require_approval,
             }
-             if self.allowed_tools is not None:
-                _tool["allowed_tools"] = self.allowed_tools
-             return _tool
+            if self.allowed_tools:
+                tool["allowed_tools"] = self.allowed_tools
+            return tool
         return None
 
 class Message(BaseModel):
@@ -278,3 +284,5 @@ def register_prompt(prompt: Prompt):
         # print(f"Warning: Prompt {prompt.path} already registered. Overwriting.")
         pass
     PROMPT_REGISTRY[prompt.path] = prompt
+    def register_mcp_server(self, server: MCP):
+        self.mcp_servers[server.server_label] = server

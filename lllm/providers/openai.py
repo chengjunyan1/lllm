@@ -100,7 +100,7 @@ class OpenAIProvider(BaseProvider):
         # Determine if we are using Chat Completion or Response API (if applicable)
         # For now, following logic in LLMCaller._call_openai
         
-        funcs = [func.to_tool(Providers.OPENAI) for func in prompt.functions.values()]
+        tools = self._build_tools(prompt)
         call_args = model_args.copy()
         
         if prompt.format is None:
@@ -121,7 +121,7 @@ class OpenAIProvider(BaseProvider):
         completion = call_fn(
             model=model,
             messages=openai_messages,
-            tools=funcs if funcs else None, # Only pass tools if there are any
+            tools=tools if tools else None,
             **call_args
         )
         
@@ -183,3 +183,15 @@ class OpenAIProvider(BaseProvider):
 
     def stream(self, *args, **kwargs):
         raise NotImplementedError("Streaming not yet implemented for OpenAIProvider")
+
+    def _build_tools(self, prompt: Prompt) -> List[Dict[str, Any]]:
+        tools: List[Dict[str, Any]] = []
+        for func in prompt.functions.values():
+            tool = func.to_tool(Providers.OPENAI)
+            if tool:
+                tools.append(tool)
+        for server in prompt.mcp_servers.values():
+            tool = server.to_tool(Providers.OPENAI)
+            if tool:
+                tools.append(tool)
+        return tools

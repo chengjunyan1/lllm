@@ -3,8 +3,8 @@ import types
 
 import pytest
 
-from lllm.core.models import PROMPT_REGISTRY, Prompt, Message, FunctionCall
-from lllm.core.const import APITypes, Roles, find_model_card
+from lllm.core.models import PROMPT_REGISTRY, Prompt, Message, FunctionCall, MCP
+from lllm.core.const import APITypes, Roles, find_model_card, Providers
 from lllm.llm import Prompts, register_prompt, AgentBase
 from lllm.proxies import (
     BaseProxy,
@@ -117,6 +117,29 @@ def test_proxy_api_catalog_and_docs(proxy_registry_cleanup):
 
     auto_test_result = proxy.proxies[path].auto_test()
     assert auto_test_result["info"]["status"] == "ok"
+
+
+def test_mcp_to_tool_and_validation():
+    mcp = MCP(server_label="docs", server_url="https://example.com/mcp", require_approval="manual", allowed_tools=["search"])
+    tool = mcp.to_tool(Providers.OPENAI)
+    assert tool["type"] == "mcp"
+    assert tool["require_approval"] == "manual"
+    assert tool["allowed_tools"] == ["search"]
+
+    with pytest.raises(ValueError):
+        MCP(server_label="broken", server_url="https://example.com", require_approval="invalid")
+
+
+def test_openai_provider_build_tools_includes_mcp():
+    mcp = MCP(server_label="kb", server_url="https://example.com/kb")
+    prompt = Prompt(
+        path="test/mcp/prompt",
+        prompt="Hello",
+        mcp_servers_list=[mcp],
+    )
+    provider = OpenAIProvider.__new__(OpenAIProvider)
+    tools = provider._build_tools(prompt)
+    assert any(tool.get("type") == "mcp" and tool["server_label"] == "kb" for tool in tools)
 
 
 def test_load_builtin_proxies_handles_missing_modules():
