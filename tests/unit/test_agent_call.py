@@ -151,6 +151,6 @@ def test_agent_call_uses_tool_role_for_response_api(log_config):
 
     agent.call(dialog)
 
-    tool_messages = [msg for msg in dialog.messages if msg.role == Roles.TOOL]
-    assert tool_messages, "tool response should be logged as TOOL role"
-    assert all(msg.role == Roles.TOOL for msg in tool_messages)
+    tool_messages = [msg for msg in dialog.messages if msg.role == Roles.USER]
+    assert tool_messages, "response-api tool results should surface as USER role"
+    assert all(msg.role == Roles.USER for msg in tool_messages)

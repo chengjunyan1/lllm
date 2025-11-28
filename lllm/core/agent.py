@@ -215,9 +215,17 @@ class Agent:
                         function_call = function(function_call)
                         result_str = function_call.result_str
                         interrupts.append(function_call)
-                    _role = Roles.TOOL
-                    dialog.send_message(current_prompt.interrupt_handler, {'call_results': result_str}, 
-                                        role=_role, creator='function', extra={'tool_call_id': function_call.id})
+                    if response.api_type == APITypes.RESPONSE:
+                        interrupt_role = Roles.USER
+                    else:
+                        interrupt_role = Roles.TOOL
+                    dialog.send_message(
+                        current_prompt.interrupt_handler,
+                        {'call_results': result_str},
+                        role=interrupt_role,
+                        creator='function',
+                        extra={'tool_call_id': function_call.id},
+                    )
                 if i == self.max_interrupt_times-1:
                     dialog.send_message(current_prompt.interrupt_handler_final, role=Roles.USER, creator='function')
                 current_prompt = dialog.top_prompt
