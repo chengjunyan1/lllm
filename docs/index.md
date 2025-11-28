@@ -6,8 +6,6 @@
 
 **LLLM** is a lightweight framework designed for researchers to fast-prototype advanced agentic systems. It emphasizes minimalism, modularity, and type safety, with first-class support for program synthesis and neuro-symbolic capabilities.
 
-It is built to be the "PyTorch for Agents"—flexible, imperative, and easy to debug.
-
 ## Key Features
 
 - **Modular Architecture**: Core abstractions, providers, tools, and memory are decoupled.
