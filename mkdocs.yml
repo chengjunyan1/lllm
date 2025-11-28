@@ -6,8 +6,8 @@ repo_name: ChengJunyan1/lllm
 edit_uri: edit/main/docs/
 theme:
   name: material
-  logo: assets/logo.png
-  favicon: assets/logo.png
+  logo: assets/lllm-icon-white.png
+  favicon: assets/lllm-icon-white.png
   features:
     - navigation.sections
     - navigation.expand
