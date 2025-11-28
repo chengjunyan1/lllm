@@ -9,7 +9,7 @@ LLLM is a lightweight framework designed to facilitate the rapid prototyping of 
 Prioritizing minimalism, modularity, and type safety, it is specifically optimized for research in program synthesis and neuro-symbolic AI. 
 While these fields require deep architectural customization, researchers often face the burden of managing low-level complexities such as exception handling, output parsing, and API error management. 
 LLLM bridges this gap by offering necessary abstractions that balance high-level encapsulation with the simplicity required for flexible experimentation.
-It also tries to make the code plain, compact, easy-to-understand, with less unnecessary indirection, thus easy for customization for different projects' needs, to allow researchers to focus on the core research questions.
+It also tries to make the code plain, compact, easy-to-understand, with less unnecessary indirection, thus easy for customization for different projects' needs, to allow researchers to focus on the core research questions. See https://lllm.one for detailed documentation.
 
 
 
@@ -73,9 +73,6 @@ print(agent("Hello!"))
 
 `provider` selects a registered backend (default `openai`), while `auto_discover` controls whether LLLM scans the paths listed in `lllm.toml` for prompts and proxies each time you spin up an agent or proxy.
 
-## Documentation
-
-See https://lllm.one/ for detailed documentation.
 
 ## Examples
 
