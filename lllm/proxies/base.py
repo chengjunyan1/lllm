@@ -73,9 +73,62 @@ class BaseProxy:
         func.is_postcall = True
         return func
 
-    def auto_test(self):
-        # This method can be used to automatically test all endpoints
-        pass
+    # ------------------------------------------------------------------
+    # Endpoint metadata helpers
+    # ------------------------------------------------------------------
+
+    def _endpoint_methods(self):
+        """
+        Yield ``(attr_name, method, endpoint_info)`` triples for every method
+        decorated with :func:`BaseProxy.endpoint`.
+        """
+        for name, method in inspect.getmembers(self, predicate=callable):
+            info = getattr(method, "endpoint_info", None)
+            if info:
+                yield name, method, info
+
+    def endpoint_directory(self) -> List[Dict[str, Any]]:
+        """
+        Return a structured list describing every endpoint exposed by this proxy.
+        """
+        directory: List[Dict[str, Any]] = []
+        for name, method, info in self._endpoint_methods():
+            entry = dict(info)
+            entry.setdefault("name", info.get("name") or name)
+            entry["callable"] = name
+            entry["docstring"] = inspect.getdoc(method)
+            directory.append(entry)
+        directory.sort(key=lambda item: ((item.get("category") or ""), item.get("endpoint") or ""))
+        return directory
+
+    def api_directory(self) -> Dict[str, Any]:
+        """
+        Return proxy metadata plus the endpoint directory.
+        """
+        return {
+            "id": getattr(self, "_proxy_path", self.__class__.__name__),
+            "display_name": getattr(self, "_proxy_name", self.__class__.__name__),
+            "description": getattr(self, "_proxy_description", ""),
+            "endpoints": self.endpoint_directory(),
+        }
+
+    def auto_test(self) -> Dict[str, Dict[str, Any]]:
+        """
+        Perform light-weight validation of endpoint metadata.
+
+        Returns a dict mapping callable name to ``{"status": "...", "issues": [...]}``.
+        """
+        results: Dict[str, Dict[str, Any]] = {}
+        for entry in self.endpoint_directory():
+            issues: List[str] = []
+            params = entry.get("params")
+            if not isinstance(params, dict):
+                issues.append("params")
+            if entry.get("response") is None:
+                issues.append("response")
+            status = "ok" if not issues else "warning"
+            results[entry["callable"]] = {"status": status, "issues": issues}
+        return results
 
 class Proxy:
     """
@@ -136,6 +189,61 @@ class Proxy:
     def available(self) -> List[str]:
         """Return the sorted list of proxy identifiers currently loaded."""
         return sorted(self.proxies.keys())
+
+    def api_catalog(self) -> Dict[str, Dict[str, Any]]:
+        """Return the API directory for every loaded proxy."""
+        return {name: proxy.api_directory() for name, proxy in self.proxies.items()}
+
+    def get_api_directory(self, proxy_name: str) -> Dict[str, Any]:
+        """Convenience wrapper that returns the directory for a single proxy."""
+        if proxy_name not in self.proxies:
+            raise KeyError(f"Proxy '{proxy_name}' not registered")
+        return self.proxies[proxy_name].api_directory()
+
+    def retrieve_api_docs(self, proxy_name: Optional[str] = None) -> str:
+        """
+        Render a human-readable overview of the available endpoints.
+
+        Args:
+            proxy_name: Optional identifier. If omitted, all proxies are included.
+        """
+        if proxy_name is not None:
+            target_names = [proxy_name]
+        else:
+            target_names = sorted(self.proxies.keys())
+
+        sections: List[str] = []
+        for name in target_names:
+            if name not in self.proxies:
+                raise KeyError(f"Proxy '{name}' not registered")
+            meta = self.proxies[name].api_directory()
+            header = f"## {meta['display_name']} ({name})"
+            description = (meta.get("description") or "").strip()
+            lines = [header]
+            if description:
+                lines.append(description)
+            for endpoint in meta.get("endpoints", []):
+                method = (endpoint.get("method") or "GET").upper()
+                desc = endpoint.get("description") or ""
+                line = f"- **{endpoint.get('endpoint')}** [{method}] – {desc}"
+                lines.append(line.strip())
+                params = endpoint.get("params") or {}
+                if isinstance(params, dict) and params:
+                    for param_name, spec in params.items():
+                        if isinstance(spec, tuple) and spec:
+                            type_hint = spec[0]
+                            example = spec[1] if len(spec) > 1 else None
+                        else:
+                            type_hint = None
+                            example = spec
+                        type_name = getattr(type_hint, "__name__", str(type_hint)) if type_hint else "Any"
+                        if isinstance(example, (list, dict)):
+                            example_preview = str(example)[:60]
+                        else:
+                            example_preview = example
+                        lines.append(f"    - `{param_name}` ({type_name}) e.g. {example_preview}")
+            sections.append("\n".join(lines).strip())
+        return "\n\n".join(sections).strip()
 
     def _resolve(self, endpoint: str) -> tuple[str, str]:
         if '.' in endpoint:

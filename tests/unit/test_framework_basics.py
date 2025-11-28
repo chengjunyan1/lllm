@@ -84,6 +84,41 @@ def test_proxy_registration_and_dispatch(proxy_registry_cleanup):
     assert response["payload"] == 123
 
 
+def test_proxy_api_catalog_and_docs(proxy_registry_cleanup):
+    path = f"test/proxy/catalog/{uuid.uuid4().hex}"
+
+    @ProxyRegistrator(path=path, name="Doc Proxy", description="Doc friendly proxy")
+    class _DocProxy(BaseProxy):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
+        @BaseProxy.endpoint(
+            category="utility",
+            endpoint="info",
+            name="Info",
+            description="Return provided details.",
+            params={"value*": (str, "demo")},
+            response={"value": "demo"},
+            method="POST",
+        )
+        def info(self, params: dict):
+            return params
+
+    proxy = Proxy(activate_proxies=[path])
+    catalog = proxy.api_catalog()
+    assert path in catalog
+    entry = catalog[path]
+    assert entry["display_name"] == "Doc Proxy"
+    assert entry["endpoints"][0]["endpoint"] == "info"
+
+    docs = proxy.retrieve_api_docs(path)
+    assert "Doc Proxy" in docs
+    assert "info" in docs
+
+    auto_test_result = proxy.proxies[path].auto_test()
+    assert auto_test_result["info"]["status"] == "ok"
+
+
 def test_load_builtin_proxies_handles_missing_modules():
     loaded, errors = load_builtin_proxies(modules=["lllm.proxies.builtin"])
     assert "lllm.proxies.builtin" in loaded
