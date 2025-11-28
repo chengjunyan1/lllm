@@ -53,8 +53,8 @@ WA_SAMPLE_PROMPT = '''
     )
 )
 class WAProxy(BaseProxy):
-    def __init__(self, cutoff_date: str = None, cache: bool = True):
-        super().__init__(cutoff_date, cache)
+    def __init__(self, cutoff_date: str = None, cache: bool = True, **kwargs):
+        super().__init__(cutoff_date=cutoff_date, use_cache=cache, **kwargs)
         self.api_key = os.getenv("WA_API_DEV")
         self.api_key_name = "appid"
         self.base_url = "https://www.wolframalpha.com/api/v1"
@@ -115,4 +115,3 @@ class WAProxy(BaseProxy):
             - See: the documentation for the # Use Assumptions section
         '''
         return params
-

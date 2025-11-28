@@ -35,8 +35,8 @@ class ExaProxy(BaseProxy):
     /FINDSIMILAR ->
     Based on a link, find and return pages that are similar in meaning.
     """
-    def __init__(self, cutoff_date: str = None, use_cache: bool = True):
-        super().__init__(cutoff_date, use_cache)
+    def __init__(self, cutoff_date: str = None, use_cache: bool = True, **kwargs):
+        super().__init__(cutoff_date=cutoff_date, use_cache=use_cache, **kwargs)
         self.api_key_name = "apikey"
         self.api_key = os.getenv("EXA_API_KEY")
         self.exa = Exa(self.api_key)

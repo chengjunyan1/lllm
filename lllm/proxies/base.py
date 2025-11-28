@@ -15,6 +15,8 @@ class BaseProxy:
         cutoff_date: Optional[dt.datetime] = None,
         deploy_mode: bool = False,
         use_cache: bool = True,
+        auto_discover: Optional[bool] = None,
+        **kwargs,
     ):
         """
         Support both legacy signatures (cutoff_date, use_cache) and the newer keyword-driven one.
@@ -23,6 +25,7 @@ class BaseProxy:
         self.cutoff_date = cutoff_date
         self.deploy_mode = deploy_mode
         self.use_cache = use_cache
+        self.auto_discover = auto_discover
 
         legacy_args = list(args)
         if legacy_args:

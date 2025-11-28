@@ -25,8 +25,8 @@ class FMPProxy(BaseProxy):
     Stock Market API and Financial Statements API
     FMP is your source for the most reliable and accurate Stock Market API and Financial Data API available. Whether you're looking for real-time stock prices, financial statements, or historical data, we offer a comprehensive solution to meet all your financial data needs.
     """
-    def __init__(self, cutoff_date: str = None, use_cache: bool = True):
-        super().__init__(cutoff_date, use_cache)
+    def __init__(self, cutoff_date: str = None, use_cache: bool = True, **kwargs):
+        super().__init__(cutoff_date=cutoff_date, use_cache=use_cache, **kwargs)
         self.api_key_name = "apikey"
         self.api_key = os.getenv("FMP_API_KEY")
         self.base_url = "https://financialmodelingprep.com/stable"

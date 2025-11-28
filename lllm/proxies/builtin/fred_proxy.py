@@ -63,8 +63,8 @@ class FREDProxy(BaseProxy):
     The Economic Research Division of the Federal Reserve Bank of St. Louis has enhanced the economic data services it provides by constructing an API (application programming interface), which allows users to create programs that retrieve data from our servers connected to the Internet.
     With our FRED® API, users may query our Federal Reserve Economic Data (FRED®) and Archival Federal Reserve Economic Data (ALFRED®) databases to retrieve the specific data desired (according to source, release, category and series among other preferences).
     """
-    def __init__(self, cutoff_date: str = None, cache: bool = True):
-        super().__init__(cutoff_date, cache)
+    def __init__(self, cutoff_date: str = None, cache: bool = True, **kwargs):
+        super().__init__(cutoff_date=cutoff_date, use_cache=cache, **kwargs)
         self.api_key_name = "api_key"
         self.api_key = os.getenv("FRED_API_KEY")
         self.base_url = "https://api.stlouisfed.org/fred"

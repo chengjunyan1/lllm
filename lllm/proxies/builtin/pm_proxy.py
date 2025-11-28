@@ -68,8 +68,8 @@ def get_polymarket_eod(market, use_cache: bool = True):
     )
 )
 class PMProxy(BaseProxy):
-    def __init__(self, cutoff_date: str = None, cache: bool = True):
-        super().__init__(cutoff_date, cache)
+    def __init__(self, cutoff_date: str = None, cache: bool = True, **kwargs):
+        super().__init__(cutoff_date=cutoff_date, use_cache=cache, **kwargs)
         raise NotImplementedError
 
         self.api_key = os.getenv("KALSHI_API_KEY_ID")

@@ -9,8 +9,8 @@ from lllm.proxies import BaseProxy, ProxyRegistrator
     description="Placeholder proxy. Replace with real tool integrations.",
 )
 class SampleProxy(BaseProxy):
-    def __init__(self, cutoff_date: str | None = None, use_cache: bool = True):
-        super().__init__(cutoff_date, use_cache)
+    def __init__(self, cutoff_date: str | None = None, use_cache: bool = True, **kwargs):
+        super().__init__(cutoff_date=cutoff_date, use_cache=use_cache, **kwargs)
         self.base_url = "https://api.example.com"
         self.api_key_name = "api_key"
 
