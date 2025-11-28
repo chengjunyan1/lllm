@@ -5,7 +5,7 @@
   <h1>Low-Level Language Model (LLLM) </h1>
 </div>
 
-LLLM is a lightweight framework designed to facilitate the rapid prototyping of advanced agentic systems. 
+LLLM is a lightweight framework designed to facilitate the rapid prototyping of advanced agentic systems. Allows users to build a complex agentic system with <100 LoC. 
 Prioritizing minimalism, modularity, and type safety, it is specifically optimized for research in program synthesis and neuro-symbolic AI. 
 While these fields require deep architectural customization, researchers often face the burden of managing low-level complexities such as exception handling, output parsing, and API error management. 
 LLLM bridges this gap by offering necessary abstractions that balance high-level encapsulation with the simplicity required for flexible experimentation.
