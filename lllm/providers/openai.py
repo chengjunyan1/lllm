@@ -9,12 +9,15 @@ from lllm.providers.base import BaseProvider
 
 class OpenAIProvider(BaseProvider):
     def __init__(self, config: Optional[Dict[str, Any]] = None):
-        _ = config or {}
-        assert os.getenv('OPENAI_API_KEY') is not None, "OPENAI_API_KEY is not set"
-        self.client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY')) # Preserving env var name
+        config = config or {}
+        self._api_key = config.get("api_key") or os.getenv("OPENAI_API_KEY")
+        if not self._api_key:
+            raise RuntimeError("OPENAI_API_KEY is not set")
+        self.client = openai.OpenAI(api_key=self._api_key) # Preserving env var name
         # Support for other base_urls (e.g. Together AI)
-        if os.getenv('TOGETHER_API_KEY') is not None:
-            self.together_client = openai.OpenAI(api_key=os.getenv('TOGETHER_API_KEY'), base_url='https://api.together.xyz/v1')
+        together_api_key = config.get("together_api_key") or os.getenv('TOGETHER_API_KEY')
+        if together_api_key is not None:
+            self.together_client = openai.OpenAI(api_key=together_api_key, base_url='https://api.together.xyz/v1')
         else:
             self.together_client = None
             print("TOGETHER_API_KEY is not set, cannot use Together AI models")
@@ -26,7 +29,7 @@ class OpenAIProvider(BaseProvider):
                 return self.together_client
             else:
                 # Generic base_url support could be added here
-                return openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'), base_url=model_card.base_url)
+                return openai.OpenAI(api_key=self._api_key, base_url=model_card.base_url)
         return self.client
 
     def _convert_dialog(self, dialog: Any) -> List[Dict[str, Any]]:
