@@ -55,6 +55,8 @@ config = {
     "name": "simple_chat_agent",
     "log_dir": "./logs",
     "log_type": "localfile",
+    "provider": "openai",           # or any provider registered via lllm.providers
+    "auto_discover": True,          # set False to skip automatic prompt/proxy discovery
     "agent_configs": {
         "assistant": {
             "model_name": "gpt-4o-mini",
@@ -67,6 +69,8 @@ config = {
 agent = SimpleAgent(config, ckpt_dir="./ckpt")
 print(agent("Hello!"))
 ```
+
+`provider` selects a registered backend (default `openai`), while `auto_discover` controls whether LLLM scans the paths listed in `lllm.toml` for prompts and proxies each time you spin up an agent or proxy.
 
 ## Documentation
 

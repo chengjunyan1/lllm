@@ -13,6 +13,7 @@ from lllm.proxies import (
     ProxyRegistrator,
     load_builtin_proxies,
 )
+import lllm.providers as provider_module
 from lllm.providers.openai import OpenAIProvider
 
 
@@ -91,23 +92,28 @@ def test_load_builtin_proxies_handles_missing_modules():
 
 
 def test_proxy_instantiation_runs_auto_discover(monkeypatch, proxy_registry_cleanup):
-    call_count = {"value": 0}
+    call_args = []
 
-    def _fake_auto_discover(*_, **__):
-        call_count["value"] += 1
+    def _fake_auto_discover(flag=None, **_):
+        call_args.append(flag)
 
-    monkeypatch.setattr("lllm.core.discovery.auto_discover", _fake_auto_discover, raising=True)
+    monkeypatch.setattr(
+        "lllm.core.discovery.auto_discover_if_enabled", _fake_auto_discover, raising=True
+    )
     Proxy()
-    assert call_count["value"] == 1
+    assert call_args == [None]
+
 
 def test_agent_base_triggers_auto_discover(monkeypatch, tmp_path, prompt_registry_cleanup):
-    call_count = {"value": 0}
+    calls = []
 
-    def _fake_auto_discover(*_, **__):
-        call_count["value"] += 1
+    def _fake_auto_discover(flag=None, **_):
+        calls.append(flag)
 
-    monkeypatch.setattr("lllm.core.agent.auto_discover", _fake_auto_discover, raising=True)
-    monkeypatch.setattr("lllm.core.agent.OpenAIProvider", lambda config: object())
+    monkeypatch.setattr(
+        "lllm.core.agent.auto_discover_if_enabled", _fake_auto_discover, raising=True
+    )
+    monkeypatch.setattr("lllm.core.agent.build_provider", lambda config: object())
 
     prompt = Prompt(path="mini/system", prompt="System prompt")
     register_prompt(prompt)
@@ -132,7 +138,45 @@ def test_agent_base_triggers_auto_discover(monkeypatch, tmp_path, prompt_registr
     }
 
     MiniAgent(config, ckpt_dir=tmp_path.as_posix(), stream=None)
-    assert call_count["value"] == 1
+    assert calls == [None]
+
+
+def test_agent_base_respects_auto_discover_flag(monkeypatch, tmp_path, prompt_registry_cleanup):
+    calls = []
+
+    def _fake_auto_discover(flag=None, **_):
+        calls.append(flag)
+
+    monkeypatch.setattr(
+        "lllm.core.agent.auto_discover_if_enabled", _fake_auto_discover, raising=True
+    )
+    monkeypatch.setattr("lllm.core.agent.build_provider", lambda config: object())
+
+    prompt = Prompt(path="mini/system", prompt="System prompt")
+    register_prompt(prompt)
+
+    class MiniAgent(AgentBase, register=False):
+        agent_type = "mini-agent"
+        agent_group = ["mini"]
+
+        def call(self, task: str, **kwargs):
+            return task
+
+    config = {
+        "name": "mini",
+        "log_dir": tmp_path.as_posix(),
+        "log_type": "none",
+        "auto_discover": False,
+        "agent_configs": {
+            "mini": {
+                "model_name": "gpt-4o-mini",
+                "system_prompt_path": "mini/system",
+            }
+        },
+    }
+
+    MiniAgent(config, ckpt_dir=tmp_path.as_posix(), stream=None)
+    assert calls == [False]
 
 
 def test_convert_dialog_handles_response_messages(monkeypatch):
@@ -163,3 +207,50 @@ def test_convert_dialog_handles_response_messages(monkeypatch):
     assert converted[0]["tool_calls"][0]["function"]["name"] == "echo"
     assert converted[1]["role"] == "tool"
     assert converted[1]["tool_call_id"] == "call-1"
+
+
+def test_prompts_auto_discover_flag(monkeypatch, prompt_registry_cleanup):
+    calls = []
+
+    def _fake_auto_discover(flag=None, **_):
+        calls.append(flag)
+
+    monkeypatch.setattr("lllm.llm.auto_discover_if_enabled", _fake_auto_discover, raising=True)
+    helper = Prompts("test", auto_discover=False)
+    with pytest.raises(KeyError):
+        helper("missing")
+    assert calls == [False]
+
+
+def test_proxy_respects_auto_discover_flag(monkeypatch, proxy_registry_cleanup):
+    calls = []
+
+    def _fake_auto_discover(flag=None, **_):
+        calls.append(flag)
+
+    monkeypatch.setattr(
+        "lllm.core.discovery.auto_discover_if_enabled", _fake_auto_discover, raising=True
+    )
+    Proxy(auto_discover=False)
+    assert calls == [False]
+
+
+def test_provider_registry_custom_builder(monkeypatch):
+    class DummyProvider:
+        def __init__(self, cfg):
+            self.cfg = cfg
+
+    monkeypatch.setitem(
+        provider_module._PROVIDER_BUILDERS, "dummy", lambda cfg: DummyProvider(cfg)
+    )
+    config = {"provider": "dummy", "provider_config": {"token": "abc"}}
+    provider = provider_module.build_provider(config)
+    assert isinstance(provider, DummyProvider)
+    assert provider.cfg == {"token": "abc"}
+
+
+def test_provider_registry_unknown_name(monkeypatch):
+    monkeypatch.setitem(provider_module._PROVIDER_BUILDERS, "openai", lambda cfg: cfg)
+    config = {"provider": "missing"}
+    with pytest.raises(KeyError):
+        provider_module.build_provider(config)

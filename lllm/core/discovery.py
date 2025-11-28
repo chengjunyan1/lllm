@@ -16,6 +16,7 @@ PROMPT_SECTION = "prompts"
 PROXY_SECTION = "proxies"
 
 _DISCOVERY_DONE = False
+_DEFAULT_AUTO_DISCOVER = True
 
 
 def auto_discover(config_path: Optional[str | Path] = None, *, force: bool = False) -> None:
@@ -35,6 +36,36 @@ def auto_discover(config_path: Optional[str | Path] = None, *, force: bool = Fal
         _discover_proxies(config.get(PROXY_SECTION, {}), base_dir)
     finally:
         _DISCOVERY_DONE = True
+
+
+def configure_auto_discover(enabled: bool) -> None:
+    """
+    Set the default behavior for future ``auto_discover_if_enabled`` calls when
+    they do not supply an explicit flag.
+    """
+    global _DEFAULT_AUTO_DISCOVER
+    _DEFAULT_AUTO_DISCOVER = bool(enabled)
+
+
+def _should_auto_discover(flag: Optional[bool]) -> bool:
+    if flag is None:
+        return _DEFAULT_AUTO_DISCOVER
+    return bool(flag)
+
+
+def auto_discover_if_enabled(
+    flag: Optional[bool] = None,
+    config_path: Optional[str | Path] = None,
+    *,
+    force: bool = False,
+) -> None:
+    """
+    Wrapper that respects the configured default/explicit flag before delegating
+    to :func:`auto_discover`.
+    """
+    if not _should_auto_discover(flag):
+        return
+    auto_discover(config_path, force=force)
 
 
 def _discover_prompts(section: dict, base_dir: Path) -> None:

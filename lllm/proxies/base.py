@@ -82,13 +82,21 @@ class Proxy:
     wires it up so prompts can enumerate available endpoints for tool selection.
     """
 
-    def __init__(self, activate_proxies: Optional[List[str]] = None, cutoff_date: dt.datetime = None, deploy_mode: bool = False):
-        from lllm.core.discovery import auto_discover
-        auto_discover()
+    def __init__(
+        self,
+        activate_proxies: Optional[List[str]] = None,
+        cutoff_date: dt.datetime = None,
+        deploy_mode: bool = False,
+        *,
+        auto_discover: Optional[bool] = None,
+    ):
+        from lllm.core.discovery import auto_discover_if_enabled
+        auto_discover_if_enabled(auto_discover)
         self.activate_proxies = activate_proxies or []
         self.cutoff_date = cutoff_date
         self.deploy_mode = deploy_mode
         self.proxies: Dict[str, BaseProxy] = {}
+        self._auto_discover_flag = auto_discover
         self._load_registered_proxies()
 
     def _load_registered_proxies(self):
@@ -100,6 +108,7 @@ class Proxy:
                     cutoff_date=self.cutoff_date,
                     activate_proxies=self.activate_proxies,
                     deploy_mode=self.deploy_mode,
+                    auto_discover=self._auto_discover_flag,
                 )
             except TypeError:
                 # Fallback to legacy positional order if subclass has not been updated yet
@@ -115,6 +124,7 @@ class Proxy:
                 cutoff_date=self.cutoff_date,
                 activate_proxies=self.activate_proxies,
                 deploy_mode=self.deploy_mode,
+                auto_discover=self._auto_discover_flag,
             )
         except TypeError:
             instance = proxy_cls(self.activate_proxies, self.cutoff_date, self.deploy_mode)

@@ -14,9 +14,9 @@ from lllm.core.const import Roles, APITypes, find_model_card
 from lllm.core.dialog import Dialog
 from lllm.core.log import ReplayableLogBase, build_log_base
 from lllm.providers.base import BaseProvider
-from lllm.providers.openai import OpenAIProvider
 import lllm.utils as U
-from lllm.core.discovery import auto_discover
+from lllm.core.discovery import auto_discover_if_enabled
+from lllm.providers import build_provider
 
 AGENT_REGISTRY: Dict[str, Type['AgentBase']] = {}
 
@@ -268,7 +268,7 @@ class AgentBase:
             register_agent_class(cls)
 
     def __init__(self, config: Dict[str, Any], ckpt_dir: str, stream = None):
-        auto_discover()
+        auto_discover_if_enabled(config.get("auto_discover"))
         if stream is None:
             stream = U.PrintSystem()
         self.config = config
@@ -285,9 +285,8 @@ class AgentBase:
         self._log_base = build_log_base(config)
         self.agents = {}
         
-        # Initialize Provider
-        # Assuming OpenAIProvider for now, but this should be configurable
-        self.llm_provider = OpenAIProvider(config)
+        # Initialize Provider via registry
+        self.llm_provider = build_provider(config)
 
         for agent_name, model_config in self.agent_configs.items():
             model_config = model_config.copy()

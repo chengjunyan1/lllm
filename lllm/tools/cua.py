@@ -7,6 +7,7 @@
 import base64
 import asyncio
 import functools as ft
+import importlib
 from dataclasses import asdict, dataclass, field
 import json
 import os
@@ -28,13 +29,17 @@ last_successful_screenshot = None
 
 def _load_async_azure_openai():
     try:
-        from openai import AsyncAzureOpenAI
+        module = importlib.import_module("openai")
     except ImportError as exc:
+        raise RuntimeError(
+            "OpenAI SDK is required to run the Computer Use Agent."
+        ) from exc
+    if not hasattr(module, "AsyncAzureOpenAI"):
         raise RuntimeError(
             "AsyncAzureOpenAI client is unavailable. Install the official openai package "
             "with Azure extras to use the Computer Use Agent."
-        ) from exc
-    return AsyncAzureOpenAI
+        )
+    return module.AsyncAzureOpenAI
 
 
 _PLAYWRIGHT_LOADER = None
@@ -45,14 +50,16 @@ def _ensure_playwright():
     global _PLAYWRIGHT_LOADER, _PLAYWRIGHT_TIMEOUT
     if _PLAYWRIGHT_LOADER is None:
         try:
-            from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
-        except ImportError as exc:
+            module = importlib.import_module("playwright.async_api")
+            async_playwright = getattr(module, "async_playwright")
+            timeout_error = getattr(module, "TimeoutError")
+        except Exception as exc:
             raise RuntimeError(
                 "Playwright is required for the Computer Use Agent. "
                 "Install it with `pip install playwright` to enable browser automation."
             ) from exc
         _PLAYWRIGHT_LOADER = async_playwright
-        _PLAYWRIGHT_TIMEOUT = PlaywrightTimeoutError
+        _PLAYWRIGHT_TIMEOUT = timeout_error
     return _PLAYWRIGHT_LOADER, _PLAYWRIGHT_TIMEOUT
 
 
@@ -148,7 +155,7 @@ class ComputerUseHandler:
                 await page.mouse.click(x, y, button=button_type)
                 try:
                     await page.wait_for_load_state("domcontentloaded", timeout=3000)
-                except TimeoutError:
+                except _PLAYWRIGHT_TIMEOUT:
                     pass
             
         elif action_type == "double_click":

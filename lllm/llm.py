@@ -12,13 +12,13 @@ from typing import Optional
 
 from lllm.core.agent import Agent, AgentBase, build_agent, register_agent_class
 from lllm.core.models import PROMPT_REGISTRY, Prompt, register_prompt
-from lllm.core.discovery import auto_discover
+from lllm.core.discovery import auto_discover_if_enabled
 
 
 class Prompts:
     """Resolve prompt objects by path with an optional namespace prefix."""
 
-    def __init__(self, root: Optional[str] = None):
+    def __init__(self, root: Optional[str] = None, *, auto_discover: Optional[bool] = None):
         """
         Args:
             root: Optional namespace prefix that is automatically prepended when
@@ -26,6 +26,7 @@ class Prompts:
                 ``system/task``).
         """
         self.root = (root or "").strip("/ ")
+        self._auto_discover_flag = auto_discover
 
     def _resolve_path(self, name: str) -> str:
         name = name.strip("/ ")
@@ -36,7 +37,7 @@ class Prompts:
         return name
 
     def __call__(self, name: str) -> Prompt:
-        auto_discover()
+        auto_discover_if_enabled(self._auto_discover_flag)
         """
         Returns:
             Prompt: The registered prompt matching ``<root>/<name>``.
@@ -53,7 +54,7 @@ class Prompts:
 
     def get(self, name: str, default: Optional[Prompt] = None) -> Optional[Prompt]:
         """Like ``dict.get`` – return the prompt or ``default`` if missing."""
-        auto_discover()
+        auto_discover_if_enabled(self._auto_discover_flag)
         key = self._resolve_path(name)
         return PROMPT_REGISTRY.get(key, default)
 

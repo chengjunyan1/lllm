@@ -39,6 +39,8 @@ config = {
     "name": "simple_chat_agent",
     "log_dir": "./logs",
     "log_type": "localfile",
+    "provider": "openai",
+    "auto_discover": True,
     "agent_configs": {
         "assistant": {
             "model_name": "gpt-4o-mini",
@@ -51,6 +53,8 @@ config = {
 agent = SimpleAgent(config, ckpt_dir="./ckpt")
 print(agent("Hello!"))
 ```
+
+Set `provider` to any backend you register via `lllm.providers.register_provider`, and flip `auto_discover` to `False` if you want to opt out of scanning `lllm.toml` paths when instantiating agents or proxies.
 
 ## Next Steps
 
