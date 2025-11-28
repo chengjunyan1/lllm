@@ -19,7 +19,7 @@ It also tries to make the code plain, compact, easy-to-understand, with less unn
 - **Type Safety**: Built on Pydantic for robust data validation and strict typing.
 - **Provider Interface**: First-class OpenAI support with an extensible interface for adding more providers as needed.
 - **Neuro-Symbolic Design**: Advanced prompt management with structured output, exception handling, and interrupt logic.
-- **Jupyter Sandbox**: Secure code execution environment for program synthesis.
+- **API Proxies**: Secure code execution of external APIs for program synthesis.
 
 ## Installation
 
