@@ -126,6 +126,7 @@ The sample configuration points to `examples/autodiscovery/prompts/` and `exampl
 - For an end-to-end agent/tool flow without real OpenAI requests, see `tests/integration/test_tool_use_mock_openai.py`. It uses the scripted client defined in `tests/helpers/mock_openai.py`, mirroring what a VCR fixture would capture.
 - Want template smoke tests? `tests/integration/test_cli_template.py` runs `python -m lllm.cli create --name demo --template init_template` inside a temp directory.
 - When you want parity with real OpenAI traffic, capture responses into JSON (see `tests/integration/recordings/sample_tool_call.json`) and point `load_recorded_completions` at your file. `tests/integration/test_tool_use_recording.py` shows how to replay those recordings without network access.
+- Need an opt-in live OpenAI smoke test? `tests/integration/test_agent_call_openai_live.py` hits the actual APIs when you export `OPENAI_API_KEY` and either run `pytest --real-openai tests/integration/test_agent_call_openai_live.py` or set `LLLM_RUN_REAL_API_TESTS=1`. Without the flag/env var the same tests fall back to the local mocks.
 - Optional future work: keep capturing real-provider recordings as APIs evolve, and consider running `examples/jupyter_sandbox_smoke.py` in CI to validate notebook tooling automatically.
 
 ## Testing
@@ -174,5 +175,7 @@ git push origin main --tags
 
 # update doc
 mkdocs build --strict
-mkdocs gh-deploy --force --clean 
+mkdocs gh-deploy --force --clean
+
 -->
+
