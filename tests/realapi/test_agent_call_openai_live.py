@@ -1,36 +1,19 @@
 import os
-
 import pytest
 
 from lllm.core.const import APITypes, Roles
 from lllm.core.models import Function, Prompt
 from lllm.providers.openai import OpenAIProvider
 from tests.helpers.agent_utils import make_agent
-from tests.helpers.mock_openai import (
-    MockOpenAIClient,
-    response_text_completion,
-    response_tool_call,
-    text_completion,
-    tool_call_completion,
-)
 
 
-def _build_openai_provider(monkeypatch, run_real: bool, *, chat_scripts=None, response_scripts=None):
-    if run_real:
-        if not os.getenv("OPENAI_API_KEY"):
-            pytest.skip("Set OPENAI_API_KEY to run live OpenAI tests.")
-        return OpenAIProvider({})
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    print("OPENAI_API_KEY is not set; skipping tests/realapi suite (mock-only tests will run).")
+    pytest.skip("OPENAI_API_KEY not configured for real API tests.", allow_module_level=True)
 
-    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
-    chat_payload = list(chat_scripts or [])
-    response_payload = list(response_scripts or [])
 
-    def fake_client(*args, **kwargs):
-        return MockOpenAIClient(chat_payload.copy(), response_payload.copy())
-
-    import openai
-
-    monkeypatch.setattr(openai, "OpenAI", fake_client)
+def _build_openai_provider() -> OpenAIProvider:
     return OpenAIProvider({})
 
 
@@ -56,9 +39,8 @@ def _make_weather_tool():
     return tool, calls
 
 
-def test_agent_call_openai_completion_optional_live(monkeypatch, log_config, real_openai_enabled):
-    scripts = [text_completion("Task acknowledged: document the repo.")]
-    provider = _build_openai_provider(monkeypatch, real_openai_enabled, chat_scripts=scripts)
+def test_agent_call_openai_completion_live(log_config):
+    provider = _build_openai_provider()
 
     system_prompt = Prompt(
         path="live/system",
@@ -84,13 +66,9 @@ def test_agent_call_openai_completion_optional_live(monkeypatch, log_config, rea
     assert dialog.tail == response
 
 
-def test_agent_call_openai_tool_flow_optional_live(monkeypatch, log_config, real_openai_enabled):
+def test_agent_call_openai_tool_flow_live(log_config):
     tool, calls = _make_weather_tool()
-    scripts = [
-        tool_call_completion("get_forecast", {"city": "Lisbon", "unit": "celsius"}),
-        text_completion("Tool call handled for Lisbon."),
-    ]
-    provider = _build_openai_provider(monkeypatch, real_openai_enabled, chat_scripts=scripts)
+    provider = _build_openai_provider()
 
     system_prompt = Prompt(
         path="live/tool/system",
@@ -116,10 +94,7 @@ def test_agent_call_openai_tool_flow_optional_live(monkeypatch, log_config, real
 
     response, dialog, interrupts = agent.call(dialog)
 
-    if real_openai_enabled:
-        assert calls and calls[0].startswith("Lisbon:")
-    else:
-        assert calls == ["Lisbon:celsius"]
+    assert calls and calls[0].startswith("Lisbon:")
     assert len(interrupts) == 1
     assert interrupts[0].name == "get_forecast"
     assert interrupts[0].result == "Lisbon:celsius"
@@ -127,9 +102,8 @@ def test_agent_call_openai_tool_flow_optional_live(monkeypatch, log_config, real
     assert response.api_type == APITypes.COMPLETION
 
 
-def test_agent_call_openai_response_api_optional_live(monkeypatch, log_config, real_openai_enabled):
-    response_scripts = [response_text_completion("Response API acknowledged: minimal summary.")]
-    provider = _build_openai_provider(monkeypatch, real_openai_enabled, response_scripts=response_scripts)
+def test_agent_call_openai_response_api_live(log_config):
+    provider = _build_openai_provider()
 
     system_prompt = Prompt(
         path="live/response/system",
@@ -161,17 +135,9 @@ def test_agent_call_openai_response_api_optional_live(monkeypatch, log_config, r
     assert dialog.tail == response
 
 
-def test_agent_call_openai_response_tool_flow_optional_live(monkeypatch, log_config, real_openai_enabled):
+def test_agent_call_openai_response_tool_flow_live(log_config):
     tool, calls = _make_weather_tool()
-    response_scripts = [
-        response_tool_call("get_forecast", {"city": "Berlin", "unit": "fahrenheit"}),
-        response_text_completion("Tool results received for Berlin."),
-    ]
-    provider = _build_openai_provider(
-        monkeypatch,
-        real_openai_enabled,
-        response_scripts=response_scripts,
-    )
+    provider = _build_openai_provider()
 
     system_prompt = Prompt(
         path="live/response/tool/system",
@@ -203,10 +169,7 @@ def test_agent_call_openai_response_tool_flow_optional_live(monkeypatch, log_con
 
     response, dialog, interrupts = agent.call(dialog)
 
-    if real_openai_enabled:
-        assert calls and calls[0].startswith("Berlin:")
-    else:
-        assert calls == ["Berlin:fahrenheit"]
+    assert calls and calls[0].startswith("Berlin:")
     assert len(interrupts) == 1
     assert interrupts[0].name == "get_forecast"
     assert interrupts[0].result == "Berlin:fahrenheit"
