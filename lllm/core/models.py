@@ -152,7 +152,7 @@ class Message(BaseModel):
     logprobs: List[TokenLogprob] = Field(default_factory=list)
     parsed: Dict[str, Any] = Field(default_factory=dict)
     model: Optional[str] = None
-    usage: Dict[str, float] = Field(default_factory=dict)
+    usage: Dict[str, Any] = Field(default_factory=dict)
     model_args: Dict[str, Any] = Field(default_factory=dict)
     extra: Dict[str, Any] = Field(default_factory=dict)
     execution_errors: List[Exception] = Field(default_factory=list)
